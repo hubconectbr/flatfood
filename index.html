@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conveniência Flat - Cardápio & Pedidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#ea1d2c', /* iFood Red */
+                            600: '#dc2626',
+                            700: '#b91c1c'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar & smoothness */
+        ::-webkit-scrollbar { height: 4px; width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .badge-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased pb-28 min-h-screen">
+
+    <!-- TOP HEADER -->
+    <header class="bg-brand-500 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-white text-brand-500 flex items-center justify-center font-black text-xl shadow">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight" id="headerShopTitle">Conveniência do Flat</h1>
+                    <p class="text-xs text-brand-100 flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+                        Autoatendimento 24h • Pegue e Pague
+                    </p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- BOTÃO QR CODE / PLACA DA MESA -->
+                <button onclick="openQrModal()" class="bg-brand-600 hover:bg-brand-700 text-white p-2 rounded-xl text-xs transition flex items-center justify-center h-9 px-2.5 font-bold gap-1.5 shadow" title="Ver QR Code / Placa do Flat">
+                    <i class="fa-solid fa-qrcode text-sm"></i>
+                    <span class="hidden sm:inline text-[11px]">QR Code</span>
+                </button>
+
+                <!-- BOTÃO DIRECTO PARA O CARRINHO -->
+                <button onclick="openCartDrawer()" class="relative bg-white text-brand-600 hover:bg-brand-50 p-2 rounded-xl text-xs transition flex items-center justify-center h-9 px-2.5 font-bold shadow" title="Acessar Carrinho">
+                    <i class="fa-solid fa-cart-shopping text-sm"></i>
+                    <span id="headerCartBadge" class="ml-1 bg-brand-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black">0</span>
+                </button>
+
+                <!-- BOTÃO ADMIN -->
+                <button onclick="openAdminModal()" class="bg-brand-600 hover:bg-brand-700 text-white p-2 rounded-xl text-xs transition flex items-center justify-center w-9 h-9" title="Painel Admin / Gerenciar Preços">
+                    <i class="fa-solid fa-gear text-sm"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- SEARCH BAR -->
+        <div class="max-w-md mx-auto px-4 pb-3">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" id="searchInput" oninput="renderProducts()" placeholder="Buscar refrigerante, vinho, escova..." 
+                    class="w-full pl-9 pr-4 py-2 rounded-xl text-gray-800 bg-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-inner">
+            </div>
+        </div>
+    </header>
+
+    <!-- CATEGORY NAVIGATION -->
+    <nav class="bg-white border-b border-gray-200 sticky top-[98px] z-20 shadow-sm">
+        <div class="max-w-md mx-auto px-2 py-2.5 flex space-x-2 overflow-x-auto no-scrollbar" id="categoryTabs">
+            <!-- Populated dynamically -->
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-md mx-auto px-4 pt-4">
+        <!-- BANNER PROMO / INFO -->
+        <div class="bg-gradient-to-r from-red-600 to-rose-500 rounded-2xl p-4 text-white shadow-lg mb-5 flex items-center justify-between relative overflow-hidden">
+            <div class="z-10 max-w-[70%]">
+                <span class="bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Autoatendimento</span>
+                <h2 class="font-extrabold text-base mt-1">Pegue os itens no seu Flat</h2>
+                <p class="text-xs text-rose-100 mt-0.5">Retire o que precisa no seu quarto e pague agora via PIX com rapidez!</p>
+                
+                <button onclick="openQrModal()" class="mt-2.5 bg-white text-brand-600 hover:bg-rose-50 text-[11px] font-bold px-3 py-1 rounded-lg shadow-sm flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-qrcode"></i> Exibir QR Code da Placa
+                </button>
+            </div>
+            <div class="text-5xl text-white/20 transform rotate-12 pr-2">
+                <i class="fa-solid fa-basket-shopping"></i>
+            </div>
+        </div>
+
+        <!-- PRODUCTS LIST CONTAINER -->
+        <div id="productsContainer" class="space-y-4">
+            <!-- Dynamic products render here -->
+        </div>
+    </main>
+
+    <!-- FLOATING BOTTOM CART BAR (iFood Style) -->
+    <div id="cartBar" class="fixed bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-gray-900/40 via-gray-900/10 to-transparent pointer-events-none transition-all transform translate-y-full">
+        <div class="max-w-md mx-auto pointer-events-auto">
+            <button onclick="openCartDrawer()" class="w-full bg-brand-500 hover:bg-brand-600 text-white rounded-2xl p-3.5 shadow-xl flex items-center justify-between font-bold text-sm transition active:scale-[0.98]">
+                <div class="flex items-center space-x-3">
+                    <span id="cartCountBadge" class="bg-white text-brand-500 text-xs w-6 h-6 rounded-full flex items-center justify-center font-extrabold">0</span>
+                    <span>Ver Carrinho</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span id="cartTotalHeader" class="text-base font-extrabold">R$ 0,00</span>
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- CART & CHECKOUT DRAWER MODAL -->
+    <div id="cartDrawer" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end flex-col hidden transition-opacity duration-300">
+        <div onclick="closeCartDrawer()" class="flex-1"></div>
+        <div class="bg-white rounded-t-3xl max-w-md w-full mx-auto max-h-[85vh] flex flex-col shadow-2xl animate-slide-up">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-3xl">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-basket-shopping text-brand-500 text-lg"></i>
+                    <h3 class="font-bold text-gray-800 text-base">Seu Pedido</h3>
+                </div>
+                <button onclick="closeCartDrawer()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Items List -->
+            <div id="cartItemsContainer" class="p-4 overflow-y-auto flex-1 divide-y divide-gray-100">
+                <!-- Cart items rendered dynamically -->
+            </div>
+
+            <!-- Customer Details & Payment Options -->
+            <div class="p-4 border-t border-gray-200 bg-gray-50 space-y-3">
+                <!-- Info Autoatendimento -->
+                <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+                    <i class="fa-solid fa-hand-holding-heart text-amber-600 mt-0.5 text-sm"></i>
+                    <div>
+                        <strong class="font-bold">Autoatendimento / Pegue e Pague:</strong> Escolha e retire os itens do seu flat e faça o pagamento PIX abaixo.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Seu Nome *</label>
+                        <input type="text" id="customerName" placeholder="Ex: Carlos Silva" class="w-full px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Flat / Quarto Nº *</label>
+                        <input type="text" id="roomNumber" placeholder="Ex: 102" class="w-full px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- PIX Container (Chave 03137189110) -->
+                <div id="pixContainer" class="bg-red-50 border border-red-200 p-3.5 rounded-2xl space-y-2.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-red-900 flex items-center gap-1.5 text-sm">
+                            <i class="fa-solid fa-qrcode text-brand-500"></i> Pagamento via PIX
+                        </span>
+                        <span class="text-[10px] font-semibold text-brand-600 bg-red-100 px-2 py-0.5 rounded-full">Chave PIX</span>
+                    </div>
+
+                    <!-- QR CODE DO PIX DENTRO DO PAGAMENTO -->
+                    <div class="bg-white p-3 rounded-xl border border-red-200 text-center space-y-2">
+                        <p class="text-[11px] font-bold text-gray-700">Escanear QR Code com App do Banco:</p>
+                        <div class="flex justify-center">
+                            <img id="pixQrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=03137189110" alt="QR Code PIX" class="w-36 h-36 rounded-lg border p-1 bg-white shadow-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white p-2.5 rounded-xl border border-red-200 space-y-1.5">
+                        <label class="block text-[11px] text-gray-500 font-medium">Ou Copiar Chave PIX (CPF/Telefone):</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="pixKeyDisplay" readonly value="03137189110" class="flex-1 text-base font-bold font-mono bg-gray-50 border rounded-lg px-2.5 py-1.5 text-gray-800 select-all">
+                            <button onclick="copyPixKey()" class="bg-brand-500 hover:bg-brand-600 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                                <i class="fa-regular fa-copy"></i> Copiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="text-[11px] text-gray-600 leading-tight">
+                        1. Escaneie o QR Code acima ou clique em <strong>Copiar</strong> para pagar no seu banco.<br>
+                        2. Após realizar o PIX, clique no botão abaixo para enviar a confirmação pelo WhatsApp.
+                    </p>
+                </div>
+
+                <!-- Summary Total -->
+                <div class="flex justify-between items-center pt-1">
+                    <span class="text-gray-600 text-sm font-medium">Total a Pagar:</span>
+                    <span id="cartDrawerTotal" class="text-xl font-black text-brand-500">R$ 0,00</span>
+                </div>
+
+                <!-- WhatsApp Order Button -->
+                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm transition active:scale-[0.98]">
+                    <i class="fa-brands fa-whatsapp text-xl"></i>
+                    <span>Confirmar Pagamento no WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL MODAL -->
+    <div id="adminModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl max-h-[90vh] flex flex-col">
+            <!-- Header -->
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-brand-500"></i> Painel de Gerenciamento
+                </h3>
+                <button onclick="closeAdminModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- AUTH VIEW -->
+            <div id="adminAuthView" class="space-y-3">
+                <p class="text-xs text-gray-500">Digite a senha de administrador para gerenciar o cardápio e configurações (Senha padrão: 1234).</p>
+                <input type="password" id="adminPasswordInput" placeholder="Senha" class="w-full px-3 py-2 text-sm border rounded-xl focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                <button onclick="authenticateAdmin()" class="w-full bg-brand-500 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-brand-600 transition">
+                    Acessar Painel
+                </button>
+            </div>
+
+            <!-- CONTENT VIEW -->
+            <div id="adminContentView" class="hidden space-y-4 overflow-y-auto flex-1 pr-1">
+                <!-- Settings -->
+                <div class="space-y-2 bg-gray-50 p-3 rounded-2xl border">
+                    <h4 class="font-bold text-xs text-gray-700">Configurações Gerais</h4>
+                    <div>
+                        <label class="block text-[11px] text-gray-500">WhatsApp para Receber Pedidos</label>
+                        <input type="text" id="adminPhoneInput" placeholder="5563999999999" class="w-full px-2.5 py-1.5 text-xs border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-gray-500">Chave PIX do Flat</label>
+                        <input type="text" id="adminPixInput" placeholder="03137189110" class="w-full px-2.5 py-1.5 text-xs border rounded-lg">
+                    </div>
+                </div>
+
+                <!-- Product Management -->
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-xs text-gray-700">Gerenciar Produtos & Preços</h4>
+                        <button onclick="addNewProductPrompt()" class="text-brand-600 text-xs font-bold hover:underline">
+                            + Novo Produto
+                        </button>
+                    </div>
+                    <div id="adminProductList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <!-- Products list for admin -->
+                    </div>
+                </div>
+
+                <button onclick="saveAdminSettings()" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-emerald-700 transition">
+                    Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TELA DE QR CODE / PLACA DO FLAT -->
+    <div id="qrModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <!-- Header -->
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-lg text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-brand-500"></i> QR Code do Cardápio
+                </h3>
+                <button onclick="closeQrModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Content Card to Print or Display -->
+            <div id="printablePlaque" class="bg-gradient-to-b from-gray-50 to-white p-5 rounded-2xl border border-gray-200 text-center space-y-4 shadow-sm">
+                <div>
+                    <span class="bg-brand-100 text-brand-700 text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">Conveniência do Flat</span>
+                    <h2 class="text-xl font-extrabold text-gray-900 mt-2">Pegue e Pague 24h</h2>
+                    <p class="text-xs text-gray-500 mt-1">Aponte a câmera do seu celular para abrir o cardápio e fazer seu pedido</p>
+                </div>
+
+                <!-- QR Code Img Cardápio -->
+                <div class="bg-white p-3 rounded-2xl inline-block border-2 border-brand-500 shadow-md">
+                    <img id="menuQrImage" src="" alt="QR Code Cardápio" class="w-48 h-48 mx-auto rounded-lg">
+                </div>
+
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3 text-left space-y-1">
+                    <p class="text-xs font-bold text-red-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt text-brand-500"></i> Chave PIX Rápida:
+                    </p>
+                    <p class="text-sm font-mono font-bold text-gray-800 bg-white p-1.5 rounded border text-center" id="qrModalPixDisplay">03137189110</p>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="printQrPlaque()" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow">
+                    <i class="fa-solid fa-print text-sm"></i> Imprimir Placa para o Quarto
+                </button>
+                <button onclick="closeQrModal()" class="w-full bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl text-xs hover:bg-gray-200">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-xs px-4 py-2.5 rounded-full shadow-2xl flex items-center space-x-2 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-green-400"></i>
+        <span id="toastMessage">Ação realizada!</span>
+    </div>
+
+    <script>
+        // DEFAULT INITIAL PRODUCTS DATA
+        const DEFAULT_PRODUCTS = [
+            // BEBIDAS
+            { id: 'b1', name: 'Coca-Cola Zero 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Gelada' },
+            { id: 'b2', name: 'Coca-Cola Original 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Mais Vendida' },
+            { id: 'b3', name: 'Sprite Zero 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'b4', name: 'Sprite Normal 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'b5', name: 'H2OH! / Limoneto 500ml', category: 'Bebidas', price: 8.50, desc: 'Garrafa 500ml suavemente gaseificada', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'b6', name: 'Água Mineral sem Gás 500ml', category: 'Bebidas', price: 4.00, desc: 'Garrafa 500ml leve e pura', icon: 'fa-glass-water', image: 'https://images.unsplash.com/photo-1560023907-5f339617ea30?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'b7', name: 'Água Mineral com Gás 500ml', category: 'Bebidas', price: 4.50, desc: 'Garrafa 500ml bem gelada', icon: 'fa-glass-water', image: 'https://images.unsplash.com/photo-1559839914-17aae19cec71?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'b8', name: 'Água Saborizada', category: 'Bebidas', price: 6.00, desc: 'Garrafa 500ml refrescante', icon: 'fa-wine-bottle', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80', active: true },
+            
+            // VINHOS & ESPUMANTES
+            { id: 'v1', name: 'Espumante Brut / Moscatel', category: 'Vinhos & Espumantes', price: 65.00, desc: 'Garrafa ideal para celebração em casal', icon: 'fa-wine-glass', image: 'https://images.unsplash.com/photo-1594498653385-d5172c532c00?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Especial Casal' },
+            { id: 'v2', name: 'Frisante Italiano Intermediário', category: 'Vinhos & Espumantes', price: 55.00, desc: 'Suave, levemente efervescente e saboroso', icon: 'fa-wine-bottle', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Recomendado' },
+            { id: 'v3', name: 'Vinho Fino Selecionado', category: 'Vinhos & Espumantes', price: 60.00, desc: 'Vinho tinto seco 750ml', icon: 'fa-wine-glass-empty', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80', active: true },
+
+            // SNACKS & DOCES
+            { id: 's1', name: 'Chocolate Fino / Barra', category: 'Snacks & Doces', price: 8.00, desc: 'Barra ou bombom premium selecionado', icon: 'fa-cookie-bite', image: 'https://images.unsplash.com/photo-1511381939415-e44015466834?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 's2', name: 'Batata Pringles / Chips', category: 'Snacks & Doces', price: 12.00, desc: 'Pote 40g crocante e saboroso', icon: 'fa-box', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80', active: true },
+
+            // HIGIENE PESSOAL
+            { id: 'h1', name: 'Escova de Dentes Macia', category: 'Higiene Pessoal', price: 9.00, desc: 'Embalagem individual higienizada', icon: 'fa-tooth', image: 'https://images.unsplash.com/photo-1559591937-e58af18f5256?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'h2', name: 'Creme Dental 90g', category: 'Higiene Pessoal', price: 6.00, desc: 'Proteção total 90g', icon: 'fa-pump-soap', image: 'https://images.unsplash.com/photo-1559591938-232128a30644?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'h3', name: 'Fio Dental 50m', category: 'Higiene Pessoal', price: 10.00, desc: 'Menta fresca 50 metros', icon: 'fa-teeth', image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'h4', name: 'Prestobarba / Aparelho de Barbear', category: 'Higiene Pessoal', price: 6.00, desc: 'Lâmina dupla de alta precisão', icon: 'fa-scissors', image: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=300&auto=format&fit=crop&q=80', active: true }
+        ];
+
+        // APP STATE
+        let products = [];
+        let cart = {}; // { productId: qty }
+        let currentCategory = 'Todos';
+        let shopConfig = {
+            phone: '5563999999999', // Default WhatsApp number for receipt
+            pixKey: '03137189110',
+            adminPass: '1234'
+        };
+
+        // INITIALIZATION
+        window.onload = function() {
+            loadLocalStorageData();
+            renderCategories();
+            renderProducts();
+            updateCartUI();
+        };
+
+        function loadLocalStorageData() {
+            const savedProducts = localStorage.getItem('flat_shop_products');
+            if (savedProducts) {
+                try { products = JSON.parse(savedProducts); } catch(e) { products = DEFAULT_PRODUCTS; }
+            } else {
+                products = DEFAULT_PRODUCTS;
+            }
+
+            const savedConfig = localStorage.getItem('flat_shop_config');
+            if (savedConfig) {
+                try { shopConfig = JSON.parse(savedConfig); } catch(e){}
+            }
+
+            // Always enforce updated default PIX key
+            if (!shopConfig.pixKey || shopConfig.pixKey === 'pix@flatconveniencia.com.br') {
+                shopConfig.pixKey = '03137189110';
+            }
+
+            const phoneInput = document.getElementById('adminPhoneInput');
+            if (phoneInput) phoneInput.value = shopConfig.phone;
+
+            const pixInput = document.getElementById('adminPixInput');
+            if (pixInput) pixInput.value = shopConfig.pixKey;
+
+            const pixDisplay = document.getElementById('pixKeyDisplay');
+            if (pixDisplay) pixDisplay.value = shopConfig.pixKey;
+        }
+
+        function saveData() {
+            localStorage.setItem('flat_shop_products', JSON.stringify(products));
+            localStorage.setItem('flat_shop_config', JSON.stringify(shopConfig));
+        }
+
+        // CATEGORIES LOGIC
+        const CATEGORIES = ['Todos', 'Bebidas', 'Vinhos & Espumantes', 'Snacks & Doces', 'Higiene Pessoal'];
+
+        function renderCategories() {
+            const container = document.getElementById('categoryTabs');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = cat === currentCategory;
+                return `
+                    <button onclick="selectCategory('${cat}')" 
+                        class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+                            isActive 
+                            ? 'bg-brand-500 text-white shadow-md' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }">
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectCategory(cat) {
+            currentCategory = cat;
+            renderCategories();
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('productsContainer');
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            const filtered = products.filter(p => {
+                if (!p.active) return false;
+                const matchesCat = (currentCategory === 'Todos' || p.category === currentCategory);
+                const matchesSearch = p.name.toLowerCase().includes(searchQuery) || p.desc.toLowerCase().includes(searchQuery);
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass text-4xl mb-2 text-gray-300"></i>
+                        <p class="text-sm">Nenhum item encontrado.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(p => {
+                const qty = cart[p.id] || 0;
+                return `
+                    <div class="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition">
+                        <div class="flex items-center space-x-3 flex-1 pr-2">
+                            <div class="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 relative">
+                                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/ea1d2c/white?text=Flat'">
+                                ${p.tag ? `<span class="absolute top-1 left-1 bg-brand-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow">${p.tag}</span>` : ''}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-gray-800 text-sm leading-tight">${p.name}</h3>
+                                <p class="text-xs text-gray-400 mt-0.5 line-clamp-1">${p.desc}</p>
+                                <div class="text-brand-500 font-extrabold text-sm mt-1">
+                                    R$ ${p.price.toFixed(2).replace('.', ',')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quantity Selector Buttons -->
+                        <div class="flex-shrink-0">
+                            ${qty === 0 ? `
+                                <button onclick="addToCart('${p.id}')" class="bg-brand-50 hover:bg-brand-100 text-brand-500 border border-brand-200 font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 transition">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Adicionar
+                                </button>
+                            ` : `
+                                <div class="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200 space-x-2">
+                                    <button onclick="removeFromCart('${p.id}')" class="w-7 h-7 rounded-lg bg-white text-gray-700 flex items-center justify-center shadow-sm hover:bg-gray-200 active:scale-95 text-xs font-bold">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <span class="text-xs font-bold text-gray-800 w-4 text-center">${qty}</span>
+                                    <button onclick="addToCart('${p.id}')" class="w-7 h-7 rounded-lg bg-brand-500 text-white flex items-center justify-center shadow-sm hover:bg-brand-600 active:scale-95 text-xs font-bold">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addToCart(id) {
+            cart[id] = (cart[id] || 0) + 1;
+            updateCartUI();
+            renderProducts();
+            showToast('Item adicionado ao carrinho');
+        }
+
+        function removeFromCart(id) {
+            if (cart[id]) {
+                cart[id]--;
+                if (cart[id] <= 0) delete cart[id];
+            }
+            updateCartUI();
+            renderProducts();
+        }
+
+        function updateCartUI() {
+            let totalItems = 0;
+            let totalPrice = 0;
+
+            Object.keys(cart).forEach(id => {
+                const p = products.find(prod => prod.id === id);
+                if (p) {
+                    totalItems += cart[id];
+                    totalPrice += p.price * cart[id];
+                }
+            });
+
+            const cartBar = document.getElementById('cartBar');
+            document.getElementById('cartCountBadge').innerText = totalItems;
+            document.getElementById('headerCartBadge').innerText = totalItems;
+            document.getElementById('cartTotalHeader').innerText = `R$ ${totalPrice.toFixed(2).replace('.', ',')}`;
+            document.getElementById('cartDrawerTotal').innerText = `R$ ${totalPrice.toFixed(2).replace('.', ',')}`;
+
+            if (totalItems > 0) {
+                cartBar.classList.remove('translate-y-full');
+            } else {
+                cartBar.classList.add('translate-y-full');
+            }
+
+            renderCartDrawerItems();
+        }
+
+        function renderCartDrawerItems() {
+            const container = document.getElementById('cartItemsContainer');
+            const cartKeys = Object.keys(cart);
+
+            if (cartKeys.length === 0) {
+                container.innerHTML = `
+                    <p class="text-center text-gray-400 text-xs py-8">Seu carrinho está vazio.</p>
+                `;
+                return;
+            }
+
+            container.innerHTML = cartKeys.map(id => {
+                const p = products.find(prod => prod.id === id);
+                if (!p) return '';
+                const qty = cart[id];
+                const itemTotal = p.price * qty;
+
+                return `
+                    <div class="py-3 flex items-center justify-between">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 text-xs">${p.name}</h4>
+                            <div class="text-xs text-gray-400">R$ ${p.price.toFixed(2).replace('.', ',')} un.</div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center bg-gray-100 rounded-lg p-0.5 border">
+                                <button onclick="removeFromCart('${p.id}')" class="w-6 h-6 rounded bg-white text-gray-700 flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-minus"></i>
+                                </button>
+                                <span class="text-xs font-bold px-2 text-gray-800">${qty}</span>
+                                <button onclick="addToCart('${p.id}')" class="w-6 h-6 rounded bg-brand-500 text-white flex items-center justify-center text-xs">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                            <span class="font-bold text-xs text-gray-800 w-16 text-right">R$ ${itemTotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openCartDrawer() {
+            document.getElementById('cartDrawer').classList.remove('hidden');
+        }
+
+        function closeCartDrawer() {
+            document.getElementById('cartDrawer').classList.add('hidden');
+        }
+
+        // QR CODE MODAL FUNCTIONS
+        function openQrModal() {
+            const currentUrl = window.location.href;
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
+            document.getElementById('menuQrImage').src = qrApiUrl;
+            document.getElementById('qrModalPixDisplay').innerText = shopConfig.pixKey;
+            
+            // Update PIX image in cart modal
+            const pixQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shopConfig.pixKey)}`;
+            document.getElementById('pixQrImage').src = pixQrUrl;
+
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function printQrPlaque() {
+            window.print();
+        }
+
+        function togglePixInfo() {
+            const method = document.getElementById('paymentMethod').value;
+            const pixBox = document.getElementById('pixContainer');
+            if (method === 'PIX') {
+                pixBox.classList.remove('hidden');
+            } else {
+                pixBox.classList.add('hidden');
+            }
+        }
+
+        function copyPixKey() {
+            const key = document.getElementById('pixKeyDisplay').value;
+            
+            // Clipboard copy workaround
+            const tempInput = document.createElement('input');
+            tempInput.value = key;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast('Chave PIX copiada com sucesso!');
+        }
+
+        function submitOrderToWhatsApp() {
+            const name = document.getElementById('customerName').value.trim();
+            const room = document.getElementById('roomNumber').value.trim();
+
+            if (!name) {
+                showToast('Por favor, informe seu Nome!', 'error');
+                document.getElementById('customerName').focus();
+                return;
+            }
+
+            if (!room) {
+                showToast('Por favor, informe o Nº do Flat/Quarto!', 'error');
+                document.getElementById('roomNumber').focus();
+                return;
+            }
+
+            let orderText = `🛒 *CONSUMO MINI MERCADO - AUTOATENDIMENTO*\n`;
+            orderText += `------------------------------------\n`;
+            orderText += `👤 *Hóspede:* ${name}\n`;
+            orderText += `🚪 *Flat/Quarto:* N° ${room}\n`;
+            orderText += `💳 *Pagamento:* PIX Realizado\n`;
+            orderText += `📌 *Chave PIX usada:* ${shopConfig.pixKey}\n`;
+            orderText += `------------------------------------\n\n`;
+            orderText += `📦 *ITENS RETIRADOS DO QUARTO:*\n`;
+
+            let totalPrice = 0;
+            Object.keys(cart).forEach(id => {
+                const p = products.find(prod => prod.id === id);
+                if (p) {
+                    const qty = cart[id];
+                    const itemTotal = p.price * qty;
+                    totalPrice += itemTotal;
+                    orderText += `• ${qty}x ${p.name} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
+                }
+            });
+
+            orderText += `\n💰 *VALOR TOTAL PAGO:* R$ ${totalPrice.toFixed(2).replace('.', ',')}\n`;
+            orderText += `\n_Segue em anexo o comprovante do PIX._`;
+
+            const encodedMessage = encodeURIComponent(orderText);
+            const cleanPhone = shopConfig.phone.replace(/\D/g, '');
+            const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+
+            // Open WhatsApp
+            window.open(whatsappUrl, '_blank');
+            
+            // Clear Cart after submission
+            cart = {};
+            updateCartUI();
+            closeCartDrawer();
+            showToast('Consumo confirmado! Enviando WhatsApp...');
+        }
+
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.remove('hidden');
+            document.getElementById('adminAuthView').classList.remove('hidden');
+            document.getElementById('adminContentView').classList.add('hidden');
+            document.getElementById('adminPasswordInput').value = '';
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function authenticateAdmin() {
+            const pass = document.getElementById('adminPasswordInput').value;
+            if (pass === shopConfig.adminPass) {
+                document.getElementById('adminAuthView').classList.add('hidden');
+                document.getElementById('adminContentView').classList.remove('hidden');
+                renderAdminProductList();
+            } else {
+                showToast('Senha incorreta! (Tente 1234)', 'error');
+            }
+        }
+
+        function renderAdminProductList() {
+            const container = document.getElementById('adminProductList');
+            container.innerHTML = products.map((p, idx) => `
+                <div class="flex items-center justify-between bg-gray-100 p-2 rounded-xl text-xs">
+                    <div class="flex items-center gap-2 flex-1">
+                        <input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleProductActive(${idx})" title="Visível no Cardápio">
+                        <span class="font-bold truncate max-w-[120px]">${p.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span>R$</span>
+                        <input type="number" step="0.50" value="${p.price}" onchange="updateProductPrice(${idx}, this.value)" class="w-16 p-1 border rounded bg-white font-bold text-center">
+                        <button onclick="removeProductAdmin(${idx})" class="text-red-500 hover:text-red-700 px-1">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleProductActive(idx) {
+            products[idx].active = !products[idx].active;
+        }
+
+        function updateProductPrice(idx, val) {
+            products[idx].price = parseFloat(val) || 0;
+        }
+
+        function removeProductAdmin(idx) {
+            products.splice(idx, 1);
+            renderAdminProductList();
+        }
+
+        function addNewProductPrompt() {
+            const name = prompt('Nome do Produto:');
+            if (!name) return;
+            const price = parseFloat(prompt('Preço (ex: 8.50):')) || 0;
+            const category = prompt('Categoria (Bebidas, Vinhos & Espumantes, Snacks & Doces, Higiene Pessoal):', 'Bebidas') || 'Bebidas';
+
+            const newProd = {
+                id: 'p_' + Date.now(),
+                name: name,
+                category: category,
+                price: price,
+                desc: 'Item da conveniência',
+                icon: 'fa-box',
+                image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=80',
+                active: true
+            };
+
+            products.push(newProd);
+            renderAdminProductList();
+        }
+
+        function saveAdminSettings() {
+            shopConfig.phone = document.getElementById('adminPhoneInput').value.trim();
+            shopConfig.pixKey = document.getElementById('adminPixInput').value.trim();
+            document.getElementById('pixKeyDisplay').value = shopConfig.pixKey;
+            
+            // Update PIX QR code image source
+            const pixQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shopConfig.pixKey)}`;
+            document.getElementById('pixQrImage').src = pixQrUrl;
+
+            saveData();
+            renderProducts();
+            closeAdminModal();
+            showToast('Configurações salvas!');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMessage').innerText = msg;
+
+            if (type === 'error') {
+                icon.className = 'fa-solid fa-circle-exclamation text-red-400';
+            } else {
+                icon.className = 'fa-solid fa-circle-check text-green-400';
+            }
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>

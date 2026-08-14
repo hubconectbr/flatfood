@@ -793,8 +793,8 @@
             { id: 's2', name: 'Batata Pringles / Chips', category: 'Snacks & Doces', price: 12.00, desc: 'Pote crocante e saboroso', icon: 'fa-box', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80', active: true },
 
             // HIGIENE PESSOAL
-            { id: 'h1', name: 'Escova de Dentes Macia', category: 'Higiene Pessoal', price: 9.00, desc: 'Embalagem individual higienizada', icon: 'fa-tooth', image: 'https://images.unsplash.com/photo-1559591937-e58af18f5256?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'h2', name: 'Creme Dental 90g', category: 'Higiene Pessoal', price: 6.00, desc: 'Proteção total 90g', icon: 'fa-pump-soap', image: 'https://images.unsplash.com/photo-1559591938-232128a30644?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'h1', name: 'Escova de Dentes Macia', category: 'Higiene Pessoal', price: 9.00, desc: 'Embalagem individual higienizada', icon: 'fa-tooth', image: 'https://images.unsplash.com/photo-1520013573795-38516d2661e4?w=300&auto=format&fit=crop&q=80', active: true },
+            { id: 'h2', name: 'Creme Dental 90g', category: 'Higiene Pessoal', price: 6.00, desc: 'Proteção total 90g', icon: 'fa-pump-soap', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80', active: true },
             { id: 'h3', name: 'Fio Dental 50m', category: 'Higiene Pessoal', price: 10.00, desc: 'Menta fresca 50 metros', icon: 'fa-teeth', image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=300&auto=format&fit=crop&q=80', active: true },
             { id: 'h4', name: 'Prestobarba / Barbear', category: 'Higiene Pessoal', price: 6.00, desc: 'Lâmina dupla de alta precisão', icon: 'fa-scissors', image: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=300&auto=format&fit=crop&q=80', active: true }
         ];
@@ -873,7 +873,18 @@
         function loadLocalStorageData() {
             const savedProducts = localStorage.getItem('flat_shop_products');
             if (savedProducts) {
-                try { products = JSON.parse(savedProducts); } catch(e) { products = DEFAULT_PRODUCTS; }
+                try { 
+                    products = JSON.parse(savedProducts); 
+                    // Atualiza automaticamente links quebrados salvos no navegador do usuário
+                    products = products.map(p => {
+                        if (p.image && (p.image.includes('1559591937') || p.image.includes('1559591938'))) {
+                            const defaultItem = DEFAULT_PRODUCTS.find(dp => dp.id === p.id);
+                            if (defaultItem) p.image = defaultItem.image;
+                        }
+                        return p;
+                    });
+                    saveData();
+                } catch(e) { products = DEFAULT_PRODUCTS; }
             } else {
                 products = DEFAULT_PRODUCTS;
             }

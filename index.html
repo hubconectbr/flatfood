@@ -73,7 +73,7 @@
                     <div class="flex items-center space-x-6">
                         <a href="#landing" onclick="switchRoute('landing')" class="flex items-center gap-1">
                             <span class="text-ifood-500 font-black text-2xl tracking-tighter flex items-center gap-1">
-                                <i class="fa-solid fa-utensils"></i> FlatFood <span class="text-xs bg-ifood-500 text-white px-2 py-0.5 rounded-full font-bold ml-1">Flat</span>
+                                <i class="fa-solid fa-utensils"></i> FlatiFood <span class="text-xs bg-ifood-500 text-white px-2 py-0.5 rounded-full font-bold ml-1">Flat</span>
                             </span>
                         </a>
 
@@ -787,8 +787,43 @@
         // Initialize Firebase
         async function initFirebase() {
             try {
-                if (typeof __firebase_config === 'undefined') return false;
-                const firebaseConfig = JSON.parse(__firebase_config);
+                let firebaseConfig = null;
+
+                // 1. Tenta carregar credenciais do ambiente de sandbox
+                if (typeof __firebase_config !== 'undefined') {
+                    firebaseConfig = JSON.parse(__firebase_config);
+                } 
+                // 2. Tenta carregar automaticamente do Firebase Hosting (se hospedado no Firebase)
+                else {
+                    try {
+                        const response = await fetch('/__/firebase/init.json');
+                        if (response.ok) {
+                            firebaseConfig = await response.json();
+                        }
+                    } catch (e) {
+                        console.log("Auto-config do Hosting não detectado no momento.");
+                    }
+                }
+
+                // 3. Objeto de fallback caso publique em hospedagem comum (Substitua se não usar Firebase Hosting)
+                if (!firebaseConfig) {
+                    firebaseConfig = {
+                        apiKey: "AIzaSyDvEQfDJmGid_iCgiQM9XThYVe5LigVG5A",
+                        authDomain: "flatfood-d4296.firebaseapp.com",
+                        projectId: "flatfood-d4296",
+                        storageBucket: "flatfood-d4296.firebasestorage.app",
+                        messagingSenderId: "695926629715",
+                        appId: "1:695926629715:web:42b50ff920566121b8eda6",
+                        measurementId: "G-P4GX2HG9YC"
+                    };
+                }
+
+                // Valida se as chaves foram preenchidas
+                if (!firebaseConfig || firebaseConfig.apiKey === "SUA_API_KEY_AQUI") {
+                    console.warn("Firebase não configurado com chaves reais. Rodando em modo local.");
+                    return false;
+                }
+
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);

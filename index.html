@@ -414,6 +414,14 @@
             <!-- ADMIN DASHBOARD MAIN CONTENT -->
             <div id="adminDashboardContainer" class="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 space-y-4 hidden overflow-y-auto">
                 
+                <!-- ALERT BANNER FOR FIREBASE STATUS -->
+                <div id="firebaseCloudAlert" class="hidden bg-amber-50 border border-amber-300 p-3.5 rounded-2xl text-xs text-amber-900 space-y-1">
+                    <div class="font-extrabold flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Atenção: A Sincronização em Nuvem precisa de ajuste no Firebase Console!
+                    </div>
+                    <p id="firebaseCloudAlertMsg" class="text-[11px] text-amber-800 leading-relaxed"></p>
+                </div>
+
                 <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
                     <div>
                         <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 w-max">
@@ -783,29 +791,45 @@
         let db = null;
         let auth = null;
         let isCloudActive = false;
+        window.cloudErrorMessage = "";
 
-        // Initialize Firebase
+        function updateCloudBadge(active, text) {
+            const cloudBadge = document.getElementById('cloudStatusBadge');
+            if (cloudBadge) {
+                if (active) {
+                    cloudBadge.className = "text-[9px] bg-emerald-700/80 text-emerald-100 px-1.5 py-0.5 rounded flex items-center gap-1";
+                    cloudBadge.innerHTML = `<i class="fa-solid fa-cloud-check text-[9px]"></i> ${text}`;
+                } else {
+                    cloudBadge.className = "text-[9px] bg-amber-700/80 text-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1";
+                    cloudBadge.innerHTML = `<i class="fa-solid fa-cloud-slash text-[9px]"></i> ${text}`;
+                }
+            }
+
+            const alertBox = document.getElementById('firebaseCloudAlert');
+            const alertMsg = document.getElementById('firebaseCloudAlertMsg');
+            if (alertBox && alertMsg && window.cloudErrorMessage) {
+                alertMsg.innerText = window.cloudErrorMessage;
+                alertBox.classList.remove('hidden');
+            }
+        }
+
         async function initFirebase() {
             try {
                 let firebaseConfig = null;
 
-                // 1. Tenta carregar credenciais do ambiente de sandbox
                 if (typeof __firebase_config !== 'undefined') {
                     firebaseConfig = JSON.parse(__firebase_config);
-                } 
-                // 2. Tenta carregar automaticamente do Firebase Hosting (se hospedado no Firebase)
-                else {
+                } else {
                     try {
                         const response = await fetch('/__/firebase/init.json');
                         if (response.ok) {
                             firebaseConfig = await response.json();
                         }
                     } catch (e) {
-                        console.log("Auto-config do Hosting não detectado no momento.");
+                        console.log("Auto-config do Hosting não detectado.");
                     }
                 }
 
-                // 3. Objeto de fallback caso publique em hospedagem comum (Substitua se não usar Firebase Hosting)
                 if (!firebaseConfig) {
                     firebaseConfig = {
                         apiKey: "AIzaSyDvEQfDJmGid_iCgiQM9XThYVe5LigVG5A",
@@ -818,47 +842,48 @@
                     };
                 }
 
-                // Valida se as chaves foram preenchidas
-                if (!firebaseConfig || firebaseConfig.apiKey === "SUA_API_KEY_AQUI") {
-                    console.warn("Firebase não configurado com chaves reais. Rodando em modo local.");
-                    return false;
-                }
-
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (authErr) {
+                    console.error("Erro na autenticação Firebase:", authErr);
+                    window.cloudErrorMessage = "Login Anônimo desativado no Firebase. Acesse Firebase Console -> Authentication -> Sign-in method e ative 'Anônimo'.";
+                    updateCloudBadge(false, "Auth Desativada");
+                    return false;
                 }
 
                 if (auth.currentUser) {
                     isCloudActive = true;
                     setupRealtimeSync();
+                    updateCloudBadge(true, "Nuvem Ativa");
                     return true;
                 }
             } catch (err) {
                 console.warn("Usando localStorage como fallback offline:", err);
+                updateCloudBadge(false, "Modo Local");
             }
             return false;
         }
 
-        // Real-Time Cloud Listeners
         function setupRealtimeSync() {
             if (!db || !auth.currentUser) return;
 
-            // Strict Rules Path for Public Data
             const prodsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
             const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
 
-            // Listen to Products changes across all devices
             onSnapshot(prodsColRef, (snapshot) => {
                 if (snapshot.empty) {
-                    // Seed initial cloud data if empty
-                    DEFAULT_PRODUCTS.forEach(p => {
-                        setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id), p);
+                    DEFAULT_PRODUCTS.forEach(async (p) => {
+                        try {
+                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id), p);
+                        } catch(e){}
                     });
                 } else {
                     const cloudProds = [];
@@ -867,15 +892,19 @@
                     renderProducts();
                     if (isAdminLoggedIn) renderAdminProductList();
                 }
-            }, (err) => console.error("Snapshot error:", err));
+            }, (err) => {
+                console.error("Snapshot error:", err);
+                isCloudActive = false;
+                window.cloudErrorMessage = "Regras do Firestore bloqueando acesso. Acesse Firebase Console -> Firestore Database -> Regras e insira 'allow read, write: if true;'.";
+                updateCloudBadge(false, "Sem Permissão");
+            });
 
-            // Listen to Shop Settings changes
             onSnapshot(configDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     shopConfig = { ...shopConfig, ...docSnap.data() };
                     syncUIElementsWithConfig();
                 } else {
-                    setDoc(configDocRef, shopConfig);
+                    setDoc(configDocRef, shopConfig).catch(e => console.error("Config err:", e));
                 }
             }, (err) => console.error("Config snapshot error:", err));
         }
@@ -906,7 +935,6 @@
             if (plaquePix) plaquePix.innerText = shopConfig.pixKey;
         }
 
-        // Local Storage Fallback
         function loadLocalStorageData() {
             const savedProducts = localStorage.getItem('flat_shop_products');
             if (savedProducts) {
@@ -927,7 +955,6 @@
             localStorage.setItem('flat_shop_config', JSON.stringify(shopConfig));
         }
 
-        // EXPOSE FUNCTIONS TO GLOBAL WINDOW SCOPE FOR HTML LISTENERS
         window.getShopUrl = function() {
             let baseUrl = window.location.origin + window.location.pathname;
             if (!baseUrl || baseUrl.includes('null') || baseUrl.startsWith('about:')) {
@@ -1278,7 +1305,6 @@
             window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
         };
 
-        // ADMIN AUTHENTICATION
         window.verificarSenhaHex = function(input) {
             const codigos = [
                 0x40, 0x46, 0x6C, 0x61, 0x74, 0x46, 0x6F, 0x6F, 0x64, 0x32, 0x30, 0x32, 0x36, 0x40
@@ -1385,69 +1411,53 @@
         window.toggleProductActive = async function(idx) {
             products[idx].active = !products[idx].active;
             if (isCloudActive && db) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', products[idx].id), products[idx]);
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', products[idx].id), products[idx]);
+                    window.showToast(products[idx].active ? 'Produto ativado na Nuvem!' : 'Produto ocultado na Nuvem!');
+                } catch(e) {
+                    saveDataLocal();
+                    window.showToast('Erro na Nuvem! Salvo localmente.', 'error');
+                }
             } else {
                 saveDataLocal();
+                window.showToast(products[idx].active ? 'Produto ativado!' : 'Produto ocultado!');
             }
             window.renderProducts();
-            window.showToast(products[idx].active ? 'Produto ativado!' : 'Produto ocultado!');
         };
 
         window.updateProductPrice = async function(idx, val) {
             products[idx].price = parseFloat(val) || 0;
             if (isCloudActive && db) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', products[idx].id), products[idx]);
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', products[idx].id), products[idx]);
+                    window.showToast('Preço atualizado na Nuvem!');
+                } catch(e) {
+                    saveDataLocal();
+                    window.showToast('Erro na Nuvem! Salvo localmente.', 'error');
+                }
             } else {
                 saveDataLocal();
+                window.showToast('Preço atualizado!');
             }
             window.renderProducts();
-            window.showToast('Preço atualizado!');
         };
 
         window.removeProductAdmin = async function(idx) {
             const removed = products.splice(idx, 1);
             if (removed[0] && isCloudActive && db) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', removed[0].id));
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', removed[0].id));
+                    window.showToast(`"${removed[0]?.name}" removido da Nuvem!`);
+                } catch(e) {
+                    saveDataLocal();
+                    window.showToast('Erro na Nuvem! Removido localmente.', 'error');
+                }
             } else {
                 saveDataLocal();
+                window.showToast(`"${removed[0]?.name}" removido!`);
             }
             window.renderAdminProductList();
             window.renderProducts();
-            window.showToast(`"${removed[0]?.name}" removido!`);
-        };
-
-        window.openProductEditModal = function(idx = null) {
-            const modal = document.getElementById('productEditModal');
-            if (idx !== null) {
-                const p = products[idx];
-                document.getElementById('editProdId').value = idx;
-                document.getElementById('productModalTitle').innerText = 'Editar Produto';
-                document.getElementById('editProdName').value = p.name;
-                document.getElementById('editProdPrice').value = p.price;
-                document.getElementById('editProdCategory').value = p.category;
-                document.getElementById('editProdDesc').value = p.desc || '';
-                document.getElementById('editProdTag').value = p.tag || '';
-                document.getElementById('editProdImage').value = p.image || '';
-            } else {
-                document.getElementById('editProdId').value = '';
-                document.getElementById('productModalTitle').innerText = 'Novo Produto';
-                document.getElementById('editProdName').value = '';
-                document.getElementById('editProdPrice').value = '';
-                document.getElementById('editProdCategory').value = 'Bebidas';
-                document.getElementById('editProdDesc').value = '';
-                document.getElementById('editProdTag').value = '';
-                document.getElementById('editProdImage').value = '';
-            }
-            if (modal) modal.classList.remove('hidden');
-        };
-
-        window.closeProductEditModal = function() {
-            const modal = document.getElementById('productEditModal');
-            if (modal) modal.classList.add('hidden');
-        };
-
-        window.editProductAdmin = function(idx) {
-            window.openProductEditModal(idx);
         };
 
         window.saveProductFromModal = async function() {
@@ -1469,7 +1479,6 @@
                 const idx = parseInt(idxVal);
                 products[idx] = { ...products[idx], name, price, category, desc, tag, image };
                 prodToSave = products[idx];
-                window.showToast('Produto atualizado!');
             } else {
                 prodToSave = {
                     id: 'p_' + Date.now(),
@@ -1478,13 +1487,19 @@
                     icon: 'fa-box'
                 };
                 products.push(prodToSave);
-                window.showToast('Novo produto cadastrado!');
             }
 
             if (isCloudActive && db) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodToSave.id), prodToSave);
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodToSave.id), prodToSave);
+                    window.showToast(idxVal !== '' ? 'Produto atualizado na Nuvem!' : 'Novo produto cadastrado na Nuvem!');
+                } catch(e) {
+                    saveDataLocal();
+                    window.showToast('Erro na Nuvem! Salvo localmente.', 'error');
+                }
             } else {
                 saveDataLocal();
+                window.showToast(idxVal !== '' ? 'Produto atualizado (Local)!' : 'Novo produto cadastrado (Local)!');
             }
 
             window.renderAdminProductList();

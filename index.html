@@ -43,6 +43,20 @@
             background-image: radial-gradient(#EA1D2C 1px, transparent 1px);
             background-size: 16px 16px;
         }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        button, a, input, select { touch-action: manipulation; }
+        
+        /* Estilo do Terminal Console */
+        .terminal-box {
+            background-color: #0d1117;
+            color: #39d353;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .terminal-line-info { color: #58a6ff; }
+        .terminal-line-warn { color: #d29922; }
+        .terminal-line-error { color: #f85149; }
+        .terminal-line-success { color: #39d353; }
+
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
@@ -51,41 +65,42 @@
 </head>
 <body class="text-ifood-darkText antialiased selection:bg-ifood-red selection:text-white">
 
-    <!-- NAVBAR FIXA -->
+    <!-- NAVBAR FIXA RESPONSIVA -->
     <header class="bg-white sticky top-0 z-40 shadow-sm no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 gap-2">
                 <!-- Logo iFood Style -->
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.hash = ''">
-                    <div class="bg-ifood-red text-white font-extrabold text-2xl px-3 py-1 rounded-2xl tracking-tighter shadow-md">
+                <div class="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0" onclick="window.location.hash = ''">
+                    <div class="bg-ifood-red text-white font-extrabold text-xl sm:text-2xl px-2.5 py-1 rounded-2xl tracking-tighter shadow-md">
                         Flat<span class="text-yellow-300">Food</span>
                     </div>
-                    <span class="hidden sm:inline-block text-xs font-semibold bg-red-100 text-ifood-red px-2.5 py-1 rounded-full">
+                    <span class="hidden md:inline-block text-xs font-semibold bg-red-100 text-ifood-red px-2.5 py-1 rounded-full">
                         <i class="fa-solid fa-store mr-1"></i> Autoatendimento 24h
                     </span>
                 </div>
 
                 <!-- Status da Nuvem & Botões de Ação -->
-                <div class="flex items-center space-x-3">
-                    <div id="cloudStatusBadge" class="flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                <div class="flex items-center space-x-1.5 sm:space-x-3">
+                    <div id="cloudStatusBadge" class="flex items-center space-x-1.5 text-[11px] sm:text-xs font-medium px-2 sm:px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                         <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span id="cloudStatusText">Carregando...</span>
+                        <span id="cloudStatusText" class="truncate max-w-[90px] sm:max-w-none">Carregando...</span>
                     </div>
 
-                    <button onclick="window.location.hash = 'shop'" class="text-sm font-semibold text-gray-700 hover:text-ifood-red transition px-3 py-2 rounded-lg hover:bg-gray-100">
-                        <i class="fa-solid fa-utensils mr-1"></i> Cardápio
+                    <button onclick="window.location.hash = 'shop'" class="text-xs sm:text-sm font-semibold text-gray-700 hover:text-ifood-red transition px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center space-x-1">
+                        <i class="fa-solid fa-utensils text-sm"></i>
+                        <span class="hidden xs:inline">Cardápio</span>
                     </button>
 
                     <!-- Carrinho Flutuante Header -->
-                    <button onclick="openCartModal()" class="relative bg-ifood-red hover:bg-ifood-darkRed text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center space-x-2 transition shadow-md">
-                        <i class="fa-solid fa-basket-shopping"></i>
+                    <button onclick="openCartModal()" class="relative bg-ifood-red hover:bg-ifood-darkRed text-white px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center space-x-1.5 sm:space-x-2 transition shadow-md min-h-[40px]">
+                        <i class="fa-solid fa-basket-shopping text-sm sm:text-base"></i>
                         <span class="hidden sm:inline">Carrinho</span>
-                        <span id="headerCartCount" class="bg-white text-ifood-red text-xs font-black px-2 py-0.5 rounded-full">0</span>
+                        <span id="headerCartCount" class="bg-white text-ifood-red text-[11px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-full">0</span>
                     </button>
 
                     <!-- Acesso Admin -->
                     <button onclick="window.location.hash = 'admin'" class="text-xs text-gray-500 hover:text-ifood-red p-2" title="Portal Admin">
-                        <i class="fa-solid fa-lock text-base"></i>
+                        <i class="fa-solid fa-lock text-sm sm:text-base"></i>
                     </button>
                 </div>
             </div>
@@ -94,48 +109,48 @@
 
     <!-- VIEW CONTAINER -->
     <main id="mainContainer">
-        <!-- 1. LANDING PAGE (Visão Inicial Estilo iFood) -->
+        <!-- 1. LANDING PAGE -->
         <section id="viewLanding" class="view-section">
-            <div class="hero-pattern min-h-[calc(100vh-4rem)] text-white relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8 flex items-center">
-                <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div class="hero-pattern min-h-[calc(100vh-4rem)] text-white relative overflow-hidden py-8 sm:py-12 px-4 sm:px-6 lg:px-8 flex items-center">
+                <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
                     
-                    <!-- Lado Esquerdo: Mensagem de Impacto -->
-                    <div class="lg:col-span-7 space-y-6">
-                        <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium border border-white/20">
+                    <!-- Lado Esquerdo -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left">
+                        <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium border border-white/20">
                             <i class="fa-solid fa-bolt text-yellow-300"></i>
                             <span>Mercadinho de Conveniência no seu Flat</span>
                         </div>
-                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none">
+                        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight sm:leading-none">
                             Conecte sua estadia à praticidade total
                         </h1>
-                        <p class="text-lg sm:text-xl text-red-100 max-w-2xl font-normal leading-relaxed">
+                        <p class="text-base sm:text-lg lg:text-xl text-red-100 max-w-2xl font-normal leading-relaxed mx-auto lg:mx-0">
                             Pegue bebidas geladas, chocolates, vinhos e itens de higiene sem sair da sua acomodação. Pague via PIX e aproveite!
                         </p>
 
-                        <!-- Benefícios Rápidos -->
-                        <div class="grid grid-cols-3 gap-4 pt-4 border-t border-white/10 max-w-xl">
+                        <!-- Benefícios -->
+                        <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-white/10 max-w-xl mx-auto lg:mx-0 text-center">
                             <div>
-                                <h4 class="font-bold text-xl text-yellow-300">24/7</h4>
-                                <p class="text-xs text-red-100">Disponível a qualquer hora</p>
+                                <h4 class="font-bold text-lg sm:text-xl text-yellow-300">24/7</h4>
+                                <p class="text-[10px] sm:text-xs text-red-100">Disponível sempre</p>
                             </div>
                             <div>
-                                <h4 class="font-bold text-xl text-yellow-300">PIX</h4>
-                                <p class="text-xs text-red-100">Pagamento Instantâneo</p>
+                                <h4 class="font-bold text-lg sm:text-xl text-yellow-300">PIX</h4>
+                                <p class="text-[10px] sm:text-xs text-red-100">Pagamento na hora</p>
                             </div>
                             <div>
-                                <h4 class="font-bold text-xl text-yellow-300">Zero Espera</h4>
-                                <p class="text-xs text-red-100">Pegue direto no quarto</p>
+                                <h4 class="font-bold text-lg sm:text-xl text-yellow-300">Zero Espera</h4>
+                                <p class="text-[10px] sm:text-xs text-red-100">Direto no quarto</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Lado Direito: Card Flutuante de Acesso Rápido -->
-                    <div class="lg:col-span-5">
-                        <div class="bg-white text-ifood-darkText rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-100 space-y-6">
-                            <div class="space-y-2">
+                    <!-- Lado Direito -->
+                    <div class="lg:col-span-5 w-full">
+                        <div class="bg-white text-ifood-darkText rounded-3xl p-5 sm:p-8 shadow-2xl border border-gray-100 space-y-5 sm:space-y-6">
+                            <div class="space-y-1.5 text-center sm:text-left">
                                 <span class="text-xs font-bold uppercase tracking-wider text-ifood-red">Autoatendimento</span>
-                                <h2 class="text-2xl font-black">Acesse o Cardápio do Flat</h2>
-                                <p class="text-sm text-gray-500">Escolha os produtos do seu frigobar ou prateleira e pague de forma rápida.</p>
+                                <h2 class="text-xl sm:text-2xl font-black">Acesse o Cardápio do Flat</h2>
+                                <p class="text-xs sm:text-sm text-gray-500">Escolha os produtos do seu frigobar ou prateleira e pague de forma rápida.</p>
                             </div>
 
                             <div class="space-y-4">
@@ -144,12 +159,12 @@
                                     <input type="text" id="landingFlatInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-ifood-red focus:border-transparent outline-none transition text-sm">
                                 </div>
 
-                                <button onclick="enterShopFromLanding()" class="w-full bg-ifood-red hover:bg-ifood-darkRed text-white font-bold py-4 rounded-xl transition shadow-lg text-base flex items-center justify-center space-x-2">
+                                <button onclick="enterShopFromLanding()" class="w-full bg-ifood-red hover:bg-ifood-darkRed text-white font-bold py-3.5 sm:py-4 rounded-xl transition shadow-lg text-sm sm:text-base flex items-center justify-center space-x-2">
                                     <span>Ver Produtos Disponíveis</span>
                                     <i class="fa-solid fa-arrow-right"></i>
                                 </button>
 
-                                <div class="relative flex py-2 items-center">
+                                <div class="relative flex py-1 items-center">
                                     <div class="flex-grow border-t border-gray-200"></div>
                                     <span class="flex-shrink mx-4 text-xs font-semibold text-gray-400 uppercase">ou</span>
                                     <div class="flex-grow border-t border-gray-200"></div>
@@ -168,37 +183,37 @@
         </section>
 
         <!-- 2. CARDÁPIO / SHOP VIEW (#shop) -->
-        <section id="viewShop" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <section id="viewShop" class="view-section hidden max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5 sm:space-y-6">
             
-            <!-- Banner do Estabelecimento -->
-            <div class="bg-gradient-to-r from-red-600 to-ifood-red rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-                <div class="relative z-10 space-y-3">
-                    <div class="flex items-center space-x-2">
-                        <span class="bg-yellow-400 text-gray-900 font-extrabold text-xs px-2.5 py-1 rounded-md">⭐ 4.9</span>
-                        <span class="text-xs bg-white/20 backdrop-blur-md px-3 py-1 rounded-full font-medium">Mini Mercado Exclusivo</span>
+            <!-- Banner -->
+            <div class="bg-gradient-to-r from-red-600 to-ifood-red rounded-3xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 space-y-2 sm:space-y-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="bg-yellow-400 text-gray-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md">⭐ 4.9</span>
+                        <span class="text-[11px] sm:text-xs bg-white/20 backdrop-blur-md px-3 py-0.5 rounded-full font-medium">Mini Mercado Exclusivo</span>
                     </div>
-                    <h1 class="text-3xl sm:text-4xl font-black">Conveniente & Gelado no seu Flat</h1>
-                    <p class="text-sm text-red-100 max-w-xl">
+                    <h1 class="text-2xl sm:text-4xl font-black">Conveniente & Gelado no seu Flat</h1>
+                    <p class="text-xs sm:text-sm text-red-100 max-w-xl">
                         Pegue o item diretamente na sua acomodação, adicione ao carrinho e efetue o pagamento via PIX.
                     </p>
                 </div>
             </div>
 
-            <!-- Categorias (Barra Deslizante Estilo iFood) -->
-            <div class="flex space-x-3 overflow-x-auto hide-scrollbar py-2">
-                <button onclick="filterCategory('Todas', this)" class="cat-btn active bg-ifood-red text-white px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:opacity-90 transition">
+            <!-- Categorias -->
+            <div class="flex space-x-2 sm:space-x-3 overflow-x-auto hide-scrollbar py-1.5 touch-pan-x">
+                <button onclick="filterCategory('Todas', this)" class="cat-btn active bg-ifood-red text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:opacity-90 transition min-h-[40px]">
                     🔥 Todas
                 </button>
-                <button onclick="filterCategory('Bebidas', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                <button onclick="filterCategory('Bebidas', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
                     🥤 Bebidas Geladas
                 </button>
-                <button onclick="filterCategory('Vinhos', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                <button onclick="filterCategory('Vinhos', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
                     🍷 Vinhos & Espumantes
                 </button>
-                <button onclick="filterCategory('Snacks', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                <button onclick="filterCategory('Snacks', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
                     🍫 Chocolates & Snacks
                 </button>
-                <button onclick="filterCategory('Higiene', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                <button onclick="filterCategory('Higiene', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
                     🪥 Higiene Pessoal
                 </button>
             </div>
@@ -206,25 +221,25 @@
             <!-- Busca Rápida -->
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="searchInput" onkeyup="searchProducts()" placeholder="Buscar refrigerante, chocolate, vinho, escova..." class="w-full pl-11 pr-4 py-3.5 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-ifood-red text-sm shadow-sm">
+                <input type="text" id="searchInput" onkeyup="searchProducts()" placeholder="Buscar refrigerante, chocolate, vinho..." class="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-ifood-red text-xs sm:text-sm shadow-sm">
             </div>
 
             <!-- Grid de Produtos -->
-            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                 <!-- Inserido dinamicamente via JS -->
             </div>
         </section>
 
         <!-- 3. ÁREA ADMINISTRATIVA (#admin) -->
-        <section id="viewAdmin" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <section id="viewAdmin" class="view-section hidden max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
             
-            <!-- Tela de Login de Segurança -->
-            <div id="adminAuthBox" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-xl border border-gray-100 space-y-6">
+            <!-- Tela de Login -->
+            <div id="adminAuthBox" class="max-w-md mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-6">
                 <div class="text-center space-y-2">
-                    <div class="w-16 h-16 bg-red-100 text-ifood-red rounded-full flex items-center justify-center mx-auto text-2xl">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 text-ifood-red rounded-full flex items-center justify-center mx-auto text-xl sm:text-2xl">
                         <i class="fa-solid fa-user-shield"></i>
                     </div>
-                    <h2 class="text-2xl font-black">Portal do Proprietário</h2>
+                    <h2 class="text-xl sm:text-2xl font-black">Portal do Proprietário</h2>
                     <p class="text-xs text-gray-500">Digite a senha master para gerenciar produtos, estoques e preços.</p>
                 </div>
 
@@ -243,47 +258,51 @@
             <div id="adminDashboard" class="hidden space-y-6">
                 
                 <!-- Cabeçalho Admin -->
-                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-2xl font-black">Gerenciador do Mercado</h2>
-                        <p class="text-xs text-gray-500">Altere preços, estoque e formas de pagamento em tempo real.</p>
+                        <h2 class="text-xl sm:text-2xl font-black">Gerenciador do Mercado</h2>
+                        <p class="text-xs text-gray-500">Altere preços, estoque e acompanhe logs do sistema.</p>
                     </div>
 
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="openProductEditModal()" class="bg-ifood-red hover:bg-ifood-darkRed text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm">
+                        <button onclick="openProductEditModal()" class="flex-1 sm:flex-none bg-ifood-red hover:bg-ifood-darkRed text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition shadow-sm min-h-[40px]">
                             <i class="fa-solid fa-plus"></i>
                             <span>Novo Produto</span>
                         </button>
-                        <button onclick="syncAllProductsToFirebase()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm" title="Envia todos os 46 produtos padrão direto para o Firebase">
+                        <button onclick="syncAllProductsToFirebase()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition shadow-sm min-h-[40px]">
                             <i class="fa-solid fa-cloud-arrow-up"></i>
-                            <span>🚀 Sincronizar Todos no Firebase</span>
+                            <span>Sincronizar Nuvem</span>
                         </button>
-                        <button onclick="openQrModal()" class="bg-gray-800 hover:bg-black text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm">
+                        <button onclick="openQrModal()" class="bg-gray-800 hover:bg-black text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition shadow-sm min-h-[40px]">
                             <i class="fa-solid fa-qrcode"></i>
                             <span>Placa QR</span>
                         </button>
-                        <button onclick="logoutAdmin()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+                        <button onclick="logoutAdmin()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3.5 py-2.5 rounded-xl text-xs transition min-h-[40px]">
                             Sair
                         </button>
                     </div>
                 </div>
 
                 <!-- Abas Admin -->
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-6">
-                    <div class="flex space-x-4 border-b border-gray-200 pb-4">
-                        <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2">
-                            📦 Lista de Produtos (Estoque & Preços)
+                <div class="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-6">
+                    <div class="flex space-x-3 sm:space-x-4 border-b border-gray-200 pb-3 overflow-x-auto hide-scrollbar">
+                        <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="font-bold text-xs sm:text-sm text-ifood-red border-b-2 border-ifood-red pb-2 whitespace-nowrap">
+                            📦 Lista de Produtos
                         </button>
-                        <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="font-bold text-sm text-gray-500 hover:text-gray-700 pb-2">
-                            ⚙️ Configurações & Teste Nuvem
+                        <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap">
+                            ⚙️ Configurações & Nuvem
+                        </button>
+                        <button onclick="switchAdminTab('console')" id="tabBtnConsole" class="font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap flex items-center space-x-1.5">
+                            <i class="fa-solid fa-terminal text-emerald-600"></i>
+                            <span>📟 Console & Logs</span>
                         </button>
                     </div>
 
                     <!-- Conteúdo Aba Produtos -->
                     <div id="tabContentProducts" class="space-y-4">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+                        <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                            <table class="w-full text-left text-xs sm:text-sm min-w-[500px]">
+                                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] sm:text-xs">
                                     <tr>
                                         <th class="p-3 rounded-l-xl">Produto</th>
                                         <th class="p-3">Categoria</th>
@@ -314,88 +333,106 @@
                             </div>
 
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Firebase API Key (Chave do seu projeto)</label>
-                                <input type="text" id="adminApiKeyInput" placeholder="Ex: AIzaSy..." class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm font-mono">
-                                <span class="text-[10px] text-gray-400 block mt-1">Insira aqui a chave obtida no Firebase Console > Configurações do Projeto > Chave da API da Web.</span>
-                            </div>
-
-                            <div class="pt-4 border-t border-gray-100 space-y-3">
-                                <h4 class="font-bold text-sm text-gray-800">Diagnóstico do Firebase Database</h4>
-                                <button onclick="testFirebaseConnection()" type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition flex items-center space-x-2">
-                                    <i class="fa-solid fa-signal"></i>
-                                    <span>Testar Conexão em Tempo Real</span>
-                                </button>
-                                <p id="firebaseDiagResult" class="text-xs font-medium text-gray-500 italic"></p>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Firebase API Key (obrigatório para Nuvem)</label>
+                                <input type="text" id="adminApiKeyInput" placeholder="Ex: AIzaSyB..." class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm font-mono">
                             </div>
 
                             <div class="pt-2">
-                                <button onclick="saveStoreSettings()" class="bg-ifood-red text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-ifood-darkRed transition shadow-sm">
+                                <button onclick="saveStoreSettings()" class="w-full sm:w-auto bg-ifood-red text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-ifood-darkRed transition shadow-sm">
                                     Salvar Configurações
                                 </button>
                             </div>
                         </div>
                     </div>
+
+                    <!-- CONTEÚDO ABA CONSOLE & LOGS -->
+                    <div id="tabContentConsole" class="hidden space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <h3 class="font-bold text-sm text-gray-800 flex items-center space-x-2">
+                                    <span>Console do Sistema em Tempo Real</span>
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                </h3>
+                                <p class="text-xs text-gray-500">Acompanhe conexões do Firebase, gravações de produtos e eventos de diagnóstico.</p>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <button onclick="testFirebaseConnection()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition">
+                                    <i class="fa-solid fa-play"></i>
+                                    <span>Testar Conexão</span>
+                                </button>
+                                <button onclick="clearSystemConsole()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-1.5 rounded-xl text-xs transition">
+                                    Limpar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TERMINAL BOX -->
+                        <div class="terminal-box p-4 rounded-2xl shadow-inner text-xs min-h-[280px] max-h-[400px] overflow-y-auto space-y-1.5 font-mono leading-relaxed" id="terminalOutput">
+                            <!-- Logs via JS -->
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
         </section>
     </main>
 
-    <!-- MODAL DE CARRINHO E CHECKOUT COM QR CODE PIX E AVISO DE COMPROVANTE -->
+    <!-- MODAL DE CARRINHO E CHECKOUT -->
     <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex justify-end">
-        <div class="bg-white w-full max-w-md h-full flex flex-col justify-between p-6 shadow-2xl overflow-y-auto">
+        <div class="bg-white w-full max-w-md h-full flex flex-col justify-between p-4 sm:p-6 shadow-2xl overflow-y-auto">
             
-            <div class="space-y-6">
+            <div class="space-y-4 sm:space-y-6">
                 <!-- Topo do Carrinho -->
-                <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3 sm:pb-4">
                     <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-basket-shopping text-ifood-red text-xl"></i>
-                        <h3 class="font-black text-xl">Seu Consumo</h3>
+                        <i class="fa-solid fa-basket-shopping text-ifood-red text-lg sm:text-xl"></i>
+                        <h3 class="font-black text-lg sm:text-xl">Seu Consumo</h3>
                     </div>
-                    <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">
+                    <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center min-h-[32px]">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
 
                 <!-- Lista de Itens do Carrinho -->
-                <div id="cartItemsList" class="space-y-3">
+                <div id="cartItemsList" class="space-y-2.5 sm:space-y-3">
                     <!-- Itens via JS -->
                 </div>
             </div>
 
             <!-- Rodapé e Checkout -->
             <div class="border-t border-gray-100 pt-4 space-y-4 mt-6">
-                <div class="space-y-2">
-                    <div class="flex justify-between text-sm text-gray-500">
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-500">
                         <span>Subtotal</span>
                         <span id="cartSubtotal">R$ 0,00</span>
                     </div>
-                    <div class="flex justify-between text-lg font-black text-ifood-darkText">
+                    <div class="flex justify-between text-base sm:text-lg font-black text-ifood-darkText">
                         <span>Total a Pagar</span>
                         <span id="cartTotal" class="text-ifood-red">R$ 0,00</span>
                     </div>
                 </div>
 
                 <!-- Informações do Hóspede -->
-                <div class="space-y-4 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                <div class="space-y-3 bg-gray-50 p-3.5 sm:p-4 rounded-2xl border border-gray-200">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seu Nome e Flat/Quarto*</label>
-                        <input type="text" id="guestInfoInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-3 py-2 bg-white rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                        <input type="text" id="guestInfoInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-3 py-2 bg-white rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                     </div>
 
-                    <!-- PASSO 1: QR CODE PIX PARA PAGAMENTO INSTANTÂNEO -->
-                    <div class="bg-white p-4 rounded-2xl border border-emerald-200 space-y-3 text-center shadow-sm">
-                        <div class="flex items-center justify-center space-x-1.5 text-xs font-extrabold text-emerald-800 uppercase tracking-wider">
-                            <i class="fa-solid fa-qrcode text-sm"></i>
+                    <!-- PASSO 1: QR CODE PIX -->
+                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-emerald-200 space-y-2 sm:space-y-3 text-center shadow-sm">
+                        <div class="flex items-center justify-center space-x-1.5 text-[11px] sm:text-xs font-extrabold text-emerald-800 uppercase tracking-wider">
+                            <i class="fa-solid fa-qrcode text-xs sm:text-sm"></i>
                             <span>Passo 1: Pague via QR Code PIX</span>
                         </div>
                         
-                        <!-- Container Dinâmico do QR Code -->
-                        <div id="cartPixQrCode" class="flex justify-center py-1"></div>
+                        <div id="cartPixQrCode" class="flex justify-center py-1 max-w-[140px] mx-auto"></div>
 
-                        <div class="flex items-center justify-between bg-emerald-50 px-3 py-2 rounded-xl text-xs font-mono border border-emerald-100">
-                            <span id="pixKeyDisplay" class="font-bold text-emerald-900">03137189110</span>
-                            <button onclick="copyPixKey()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded-lg transition text-[11px] flex items-center space-x-1">
+                        <div class="flex items-center justify-between bg-emerald-50 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-mono border border-emerald-100">
+                            <span id="pixKeyDisplay" class="font-bold text-emerald-900 truncate mr-1">03137189110</span>
+                            <button onclick="copyPixKey()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg transition text-[10px] sm:text-[11px] flex items-center space-x-1 shrink-0">
                                 <i class="fa-solid fa-copy"></i>
                                 <span>Copiar</span>
                             </button>
@@ -403,7 +440,7 @@
                     </div>
 
                     <!-- PASSO 2: AVISO E ENVIO NO WHATSAPP COM ANEXO -->
-                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-[11px] text-amber-900 space-y-1">
+                    <div class="bg-amber-50 border border-amber-200 p-2.5 sm:p-3 rounded-xl text-[10px] sm:text-[11px] text-amber-900 space-y-1">
                         <span class="font-black flex items-center space-x-1">
                             <i class="fa-solid fa-paperclip text-amber-700"></i>
                             <span>Passo 2: Anexe o Comprovante</span>
@@ -412,8 +449,8 @@
                     </div>
                 </div>
 
-                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl transition shadow-lg flex items-center justify-center space-x-2 text-sm">
-                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 sm:py-4 rounded-2xl transition shadow-lg flex items-center justify-center space-x-2 text-xs sm:text-sm min-h-[48px]">
+                    <i class="fa-brands fa-whatsapp text-base sm:text-lg"></i>
                     <span>Confirmar & Enviar no WhatsApp</span>
                 </button>
             </div>
@@ -523,12 +560,37 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // MÓDULO DE LOGS & TERMINAL VISUAL
+        const consoleLogs = [];
+        function logToConsole(msg, type = 'info') {
+            const timeStr = new Date().toLocaleTimeString();
+            const logItem = { time: timeStr, msg, type };
+            consoleLogs.push(logItem);
+
+            const output = document.getElementById('terminalOutput');
+            if (output) {
+                const line = document.createElement('div');
+                let cssClass = 'terminal-line-info';
+                if (type === 'warn') cssClass = 'terminal-line-warn';
+                if (type === 'error') cssClass = 'terminal-line-error';
+                if (type === 'success') cssClass = 'terminal-line-success';
+
+                line.className = cssClass;
+                line.innerHTML = `[${timeStr}] [${type.toUpperCase()}] ${msg}`;
+                output.appendChild(line);
+                output.scrollTop = output.scrollHeight;
+            }
+        }
+
+        function clearSystemConsole() {
+            consoleLogs.length = 0;
+            const output = document.getElementById('terminalOutput');
+            if (output) output.innerHTML = '<div class="terminal-line-info">[SYSTEM] Terminal limpo com sucesso.</div>';
+        }
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'flatfood-app';
-        
-        // CONFIGURAÇÃO CENTRALIZADA DO FIREBASE
-        // Substitua "SUA_API_KEY_AQUI" pela sua chave real do Firebase (ex: "AIzaSy...")
         let firebaseConfig = {
-            apiKey: "AIzaSyDvEQfDJmGid_iCgiQM9XThYVe5LigVG5A",
+            apiKey: localStorage.getItem('flatfood_api_key') || "",
             projectId: "flatfood-d4296",
             authDomain: "flatfood-d4296.firebaseapp.com",
             storageBucket: "flatfood-d4296.firebasestorage.app"
@@ -541,7 +603,9 @@
         let app, db, auth;
         let isCloudActive = false;
 
-        // PRODUTOS PADRÃO COM ESTOQUE E PREÇOS EXATOS
+        logToConsole("Iniciando FlatFood 24h App...", "info");
+
+        // PRODUTOS PADRÃO
         const DEFAULT_PRODUCTS = [
             { id: 'p1', name: 'Coca-Cola Zero 350ml', price: 7.00, stock: 12, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80' },
             { id: 'p2', name: 'Coca-Cola Original 350ml', price: 7.00, stock: 15, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'MAIS VENDIDA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
@@ -588,7 +652,13 @@
             { id: 'p43', name: 'Água com/Gás', price: 5.00, stock: 15, category: 'Bebidas', desc: 'Água mineral levemente gaseificada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&auto=format&fit=crop&q=80' },
             { id: 'p44', name: 'Campo Largo red 500', price: 42.00, stock: 4, category: 'Vinhos', desc: 'Vinho Tinto Campo Largo 500ml', tag: 'TINTO', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
             { id: 'p45', name: 'V D Bosco', price: 65.99, stock: 4, category: 'Vinhos', desc: 'Vinho Dom Bosco garrafa especial', tag: 'TRADICIONAL', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80' },
-            { id: 'p46', name: 'Tic tac', price: 6.00, stock: 20, category: 'Snacks', desc: 'Caixinha de pastilhas Tic Tac', tag: 'REFRESCANTE', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' }
+            { id: 'p46', name: 'Tic tac', price: 6.00, stock: 20, category: 'Snacks', desc: 'Caixinha de pastilhas Tic Tac', tag: 'REFRESCANTE', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p47', name: 'Kit Escova + Creme Dental', price: 12.00, stock: 10, category: 'Higiene', desc: 'Escova macia e pasta de dente', tag: 'ESSENCIAL', image: 'https://images.unsplash.com/photo-1559591937-e58af1809278?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p48', name: 'Sabonete Em Barra Dove/Lux', price: 6.00, stock: 15, category: 'Higiene', desc: 'Sabonete cremoso hidratante 90g', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1607006344380-b6775a0824a7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p49', name: 'Shampoo Pantene / Seda 200ml', price: 18.00, stock: 8, category: 'Higiene', desc: 'Frasco 200ml limpeza suave', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p50', name: 'Escova de Dentes Macia', price: 10.00, stock: 12, category: 'Higiene', desc: 'Cerdas macias com protetor de cerdas', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1522849676594-ba09117cf494?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p51', name: 'Creme Dental Colgate 90g', price: 8.00, stock: 15, category: 'Higiene', desc: 'Pasta de dente proteção total 90g', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p52', name: 'Desodorante Aerosol 150ml', price: 19.00, stock: 8, category: 'Higiene', desc: 'Proteção 48h antitranspirante', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=300&auto=format&fit=crop&q=80' }
         ];
 
         let products = [];
@@ -602,7 +672,9 @@
         async function initFirebase() {
             try {
                 if (!firebaseConfig.apiKey) {
-                    throw new Error("Chave 'apiKey' do Firebase não configurada.");
+                    logToConsole("Firebase API Key ausente. Modo Local ativo.", "warn");
+                    updateCloudStatusUI(false, "Modo Local");
+                    return;
                 }
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -614,36 +686,35 @@
                     await signInAnonymously(auth);
                 }
                 isCloudActive = true;
+                logToConsole("Firebase autenticado e conectado com sucesso!", "success");
                 updateCloudStatusUI(true, "Nuvem Conectada");
 
                 const prodRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
                 onSnapshot(prodRef, (snapshot) => {
                     if (!snapshot.empty) {
                         const cloudItems = [];
-                        snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
-                        products = cloudItems;
-                        renderProducts();
-                        renderAdminProductList();
-                        updateCloudStatusUI(true, "Nuvem Sincronizada");
+                        snapshot.forEach(doc => {
+                            if (doc.id !== 'ping_test') {
+                                cloudItems.push({ id: doc.id, ...doc.data() });
+                            }
+                        });
+                        if (cloudItems.length > 0) {
+                            products = cloudItems;
+                            renderProducts();
+                            renderAdminProductList();
+                            logToConsole(`Nuvem Sincronizada: ${cloudItems.length} produtos carregados.`, "success");
+                            updateCloudStatusUI(true, "Nuvem Sincronizada");
+                        }
                     }
                 }, (err) => {
-                    console.warn("Erro no listener da nuvem:", err);
+                    logToConsole(`Erro no listener da nuvem: ${err.message}`, "error");
                     updateCloudStatusUI(false, "Sincronização Falhou");
                 });
             } catch (e) {
-                console.warn("Modo Local Ativo (Firebase Fallback):", e);
+                logToConsole(`Falha ao conectar no Firebase: ${e.message}`, "warn");
                 updateCloudStatusUI(false, "Modo Local");
                 window.firebaseInitError = e.message;
             }
-        }
-
-        function showToast(msg, type = 'info') {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            toast.innerText = msg;
-            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transition transform ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         function updateCloudStatusUI(active, text) {
@@ -668,11 +739,13 @@
                     const parsed = JSON.parse(localProd);
                     if (Array.isArray(parsed) && parsed.length > 0) {
                         products = parsed;
+                        logToConsole(`Carregados ${products.length} produtos do LocalStorage.`, "info");
                     } else {
                         products = [...DEFAULT_PRODUCTS];
                     }
                 } else {
                     products = [...DEFAULT_PRODUCTS];
+                    logToConsole(`Carregados ${products.length} produtos padrão.`, "info");
                 }
             } catch(e) {
                 products = [...DEFAULT_PRODUCTS];
@@ -691,10 +764,12 @@
             if (hash === 'admin') {
                 const viewAdmin = document.getElementById('viewAdmin');
                 if (viewAdmin) viewAdmin.classList.remove('hidden');
+                logToConsole("Navegou para a Área Administrativa.", "info");
             } else if (hash === 'shop') {
                 const viewShop = document.getElementById('viewShop');
                 if (viewShop) viewShop.classList.remove('hidden');
                 renderProducts();
+                logToConsole("Navegou para o Cardápio de Produtos.", "info");
             } else {
                 const viewLanding = document.getElementById('viewLanding');
                 if (viewLanding) viewLanding.classList.remove('hidden');
@@ -793,6 +868,7 @@
                 cart.push({ ...prod, qty: 1 });
             }
             updateCartUI();
+            logToConsole(`Adicionou ao carrinho: ${prod.name}`, "info");
             showToast(`"${prod.name}" adicionado ao carrinho!`);
         }
 
@@ -849,7 +925,6 @@
             if (subTotalEl) subTotalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
             if (totalEl) totalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
 
-            // Gerar QR code no modal do carrinho
             generateCartPixQrCode();
         }
 
@@ -904,6 +979,8 @@
             const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
             window.open(url, '_blank');
 
+            logToConsole(`Pedido enviado no WhatsApp para ${guestInfo}. Total: R$ ${total.toFixed(2)}`, "success");
+
             cart = [];
             updateCartUI();
             closeCartModal();
@@ -930,8 +1007,10 @@
                 document.getElementById('adminAuthBox')?.classList.add('hidden');
                 document.getElementById('adminDashboard')?.classList.remove('hidden');
                 renderAdminProductList();
+                logToConsole("Autenticação Admin realizada com sucesso.", "success");
                 showToast('Acesso concedido!');
             } else {
+                logToConsole("Tentativa incorreta de senha no Admin.", "warn");
                 showToast('Senha incorreta!', 'error');
             }
         }
@@ -941,19 +1020,27 @@
             document.getElementById('adminAuthBox')?.classList.remove('hidden');
             const passInput = document.getElementById('adminPasswordInput');
             if (passInput) passInput.value = '';
+            logToConsole("Sessão Admin encerrada.", "info");
         }
 
         function switchAdminTab(tab) {
+            document.getElementById('tabContentProducts')?.classList.add('hidden');
+            document.getElementById('tabContentSettings')?.classList.add('hidden');
+            document.getElementById('tabContentConsole')?.classList.add('hidden');
+
+            document.getElementById('tabBtnProducts').className = "font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap";
+            document.getElementById('tabBtnSettings').className = "font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap";
+            document.getElementById('tabBtnConsole').className = "font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap flex items-center space-x-1.5";
+
             if (tab === 'products') {
                 document.getElementById('tabContentProducts')?.classList.remove('hidden');
-                document.getElementById('tabContentSettings')?.classList.add('hidden');
-                document.getElementById('tabBtnProducts').className = "font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2";
-                document.getElementById('tabBtnSettings').className = "font-bold text-sm text-gray-500 hover:text-gray-700 pb-2";
-            } else {
-                document.getElementById('tabContentProducts')?.classList.add('hidden');
+                document.getElementById('tabBtnProducts').className = "font-bold text-xs sm:text-sm text-ifood-red border-b-2 border-ifood-red pb-2 whitespace-nowrap";
+            } else if (tab === 'settings') {
                 document.getElementById('tabContentSettings')?.classList.remove('hidden');
-                document.getElementById('tabBtnSettings').className = "font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2";
-                document.getElementById('tabBtnProducts').className = "font-bold text-sm text-gray-500 hover:text-gray-700 pb-2";
+                document.getElementById('tabBtnSettings').className = "font-bold text-xs sm:text-sm text-ifood-red border-b-2 border-ifood-red pb-2 whitespace-nowrap";
+            } else if (tab === 'console') {
+                document.getElementById('tabContentConsole')?.classList.remove('hidden');
+                document.getElementById('tabBtnConsole').className = "font-bold text-xs sm:text-sm text-emerald-600 border-b-2 border-emerald-600 pb-2 whitespace-nowrap flex items-center space-x-1.5";
             }
         }
 
@@ -1045,13 +1132,16 @@
             if (isCloudActive && db) {
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodObj.id), prodObj);
+                    logToConsole(`Produto "${prodObj.name}" salvo no Firebase Firestore.`, "success");
                     showToast('Salvo na Nuvem com sucesso!');
                 } catch(e) {
                     saveDataLocal();
+                    logToConsole(`Erro no Firestore ao salvar produto: ${e.message}`, "error");
                     showToast('Salvo Localmente!', 'warning');
                 }
             } else {
                 saveDataLocal();
+                logToConsole(`Produto "${prodObj.name}" salvo no LocalStorage.`, "info");
                 showToast('Salvo Localmente!');
             }
 
@@ -1065,6 +1155,7 @@
             if (removed[0] && isCloudActive && db) {
                 try {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', removed[0].id));
+                    logToConsole(`Produto "${removed[0].name}" removido da nuvem.`, "info");
                     showToast(`"${removed[0].name}" removido da nuvem!`);
                 } catch(e) {
                     saveDataLocal();
@@ -1081,43 +1172,42 @@
         async function syncAllProductsToFirebase() {
             if (!isCloudActive || !db) {
                 showToast('Firebase não está ativo! Configure a API Key na aba Configurações.', 'error');
+                logToConsole("Sincronização em massa abortada: Firebase inativo.", "warn");
                 return;
             }
 
-            showToast('Iniciando sincronização dos 46 produtos...');
+            showToast(`Iniciando sincronização dos ${DEFAULT_PRODUCTS.length} produtos...`);
+            logToConsole("Iniciando gravação dos produtos no Firestore...", "info");
             try {
                 let successCount = 0;
                 for (const prod of DEFAULT_PRODUCTS) {
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prod.id), prod);
                     successCount++;
                 }
+                logToConsole(`Sincronização em massa concluída: ${successCount} produtos salvos.`, "success");
                 showToast(`🚀 Sucesso! ${successCount} produtos cadastrados e sincronizados no Firebase!`);
                 renderProducts();
                 renderAdminProductList();
             } catch (e) {
-                console.error("Erro na sincronização em massa:", e);
+                logToConsole(`Erro na sincronização em massa: ${e.message}`, "error");
                 showToast(`Erro ao sincronizar: ${e.message}`, 'error');
             }
         }
 
         async function testFirebaseConnection() {
-            const resultEl = document.getElementById('firebaseDiagResult');
-            if (!resultEl) return;
-            resultEl.innerText = "Testando conexão com o Firestore...";
-
+            logToConsole("Executando teste manual de conexão com o Firebase...", "info");
             if (!isCloudActive || !db) {
                 const cause = window.firebaseInitError || "Sem apiKey do Firebase configurada.";
-                resultEl.innerHTML = `<span class='text-amber-600 font-bold'>⚠️ Modo Local Ativo. Motivo: ${cause}</span>`;
+                logToConsole(`Teste abortado: Modo Local ativo. Motivo: ${cause}`, "warn");
                 return;
             }
 
             try {
                 const testDoc = doc(db, 'artifacts', appId, 'public', 'data', 'products', 'ping_test');
                 await setDoc(testDoc, { ping: true, timestamp: Date.now() });
-                resultEl.innerHTML = "<span class='text-emerald-600 font-bold'>✅ Conexão OK! O banco em nuvem respondeu com sucesso.</span>";
+                logToConsole("✅ Teste OK! Firestore respondeu e aceitou a gravação.", "success");
             } catch(e) {
-                console.error("Erro no teste:", e);
-                resultEl.innerHTML = `<span class='text-red-600 font-bold'>❌ Erro de Permissão/Conexão: ${e.message}</span>`;
+                logToConsole(`❌ Erro de permissão/conexão no Firestore: ${e.message}`, "error");
             }
         }
 
@@ -1134,6 +1224,7 @@
             }
             if (apiKey !== undefined) {
                 localStorage.setItem('flatfood_api_key', apiKey);
+                logToConsole("API Key salva no LocalStorage. Recarregue a página.", "info");
             }
             showToast('Configurações salvas! Recarregue a página para aplicar a API Key.');
         }
@@ -1163,6 +1254,15 @@
                 if (guestInput) guestInput.value = input;
             }
             window.location.hash = 'shop';
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transition transform ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         async function initApp() {
@@ -1204,6 +1304,7 @@
         window.closeQrModal = closeQrModal;
         window.enterShopFromLanding = enterShopFromLanding;
         window.showToast = showToast;
+        window.clearSystemConsole = clearSystemConsole;
 
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             initApp();

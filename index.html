@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="h-full bg-gray-50">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Conveniência do Flat - Food Autoatendimento 24h</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlatFood - Mini Mercado Autoatendimento 24h</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Font Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <script>
         tailwind.config = {
@@ -17,14 +19,11 @@
                 extend: {
                     colors: {
                         ifood: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            500: '#ea1d2c', /* iFood Signature Red */
-                            600: '#dc2626',
-                            700: '#b91c1c',
-                            800: '#991b1b',
-                            900: '#7f1d1d',
-                            dark: '#1f1f1f'
+                            red: '#EA1D2C',
+                            darkRed: '#B81320',
+                            lightBg: '#F7F7F7',
+                            grayText: '#717171',
+                            darkText: '#3E3E3E'
                         }
                     },
                     fontFamily: {
@@ -34,1430 +33,864 @@
             }
         }
     </script>
-    <style>
-        ::-webkit-scrollbar { height: 4px; width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        .animate-slide-up {
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
 
-        /* Print styles for plaque generator */
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F7F7F7; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hero-pattern {
+            background-color: #8B0000;
+            background-image: radial-gradient(#EA1D2C 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
         @media print {
-            body * { visibility: hidden; }
-            #printablePlaque, #printablePlaque * { visibility: visible; }
-            #printablePlaque { position: absolute; left: 0; top: 0; width: 100%; border: none; shadow: none; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-900 font-sans antialiased min-h-screen flex flex-col selection:bg-ifood-500 selection:text-white">
+<body class="text-ifood-darkText antialiased selection:bg-ifood-red selection:text-white">
 
-    <div id="appContainer" class="w-full min-h-screen flex flex-col bg-white">
+    <!-- NAVBAR FIXA -->
+    <header class="bg-white sticky top-0 z-40 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo iFood Style -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.hash = ''">
+                    <div class="bg-ifood-red text-white font-extrabold text-2xl px-3 py-1 rounded-2xl tracking-tighter shadow-md">
+                        Flat<span class="text-yellow-300">Food</span>
+                    </div>
+                    <span class="hidden sm:inline-block text-xs font-semibold bg-red-100 text-ifood-red px-2.5 py-1 rounded-full">
+                        <i class="fa-solid fa-store mr-1"></i> Autoatendimento 24h
+                    </span>
+                </div>
 
-        <!-- ========================================== -->
-        <!-- VIEW 0: LANDING PORTAL (iFood Layout Style) -->
-        <!-- ========================================== -->
-        <div id="landingView" class="flex-1 flex flex-col w-full">
-            
-            <!-- TOP NAVBAR (iFood Standard Header) -->
-            <header class="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+                <!-- Status da Nuvem & Botões de Ação -->
+                <div class="flex items-center space-x-3">
+                    <div id="cloudStatusBadge" class="flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                        <span id="cloudStatusText">Conectando...</span>
+                    </div>
+
+                    <button onclick="window.location.hash = 'shop'" class="text-sm font-semibold text-gray-700 hover:text-ifood-red transition px-3 py-2 rounded-lg hover:bg-gray-100">
+                        <i class="fa-solid fa-utensils mr-1"></i> Cardápio
+                    </button>
+
+                    <!-- Carrinho Flutuante Header -->
+                    <button onclick="openCartModal()" class="relative bg-ifood-red hover:bg-ifood-darkRed text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center space-x-2 transition shadow-md">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                        <span class="hidden sm:inline">Carrinho</span>
+                        <span id="headerCartCount" class="bg-white text-ifood-red text-xs font-black px-2 py-0.5 rounded-full">0</span>
+                    </button>
+
+                    <!-- Acesso Admin -->
+                    <button onclick="window.location.hash = 'admin'" class="text-xs text-gray-500 hover:text-ifood-red p-2" title="Portal Admin">
+                        <i class="fa-solid fa-lock text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- VIEW CONTAINER -->
+    <main id="mainContainer">
+        <!-- 1. LANDING PAGE (Visão Inicial Estilo iFood) -->
+        <section id="viewLanding" class="view-section">
+            <div class="hero-pattern min-h-[calc(100vh-4rem)] text-white relative overflow-hidden py-12 px-4 sm:px-6 lg:px-8 flex items-center">
+                <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                     
-                    <!-- Logo + Location Selector -->
-                    <div class="flex items-center space-x-6">
-                        <a href="#landing" onclick="switchRoute('landing')" class="flex items-center gap-1">
-                            <span class="text-ifood-500 font-black text-2xl tracking-tighter flex items-center gap-1">
-                                <i class="fa-solid fa-utensils"></i> FlatiFood <span class="text-xs bg-ifood-500 text-white px-2 py-0.5 rounded-full font-bold ml-1">Flat</span>
-                            </span>
-                        </a>
-
-                        <!-- Location Dropdown -->
-                        <div class="hidden md:flex items-center space-x-2 text-xs font-semibold text-gray-700 hover:text-ifood-500 cursor-pointer bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-xl border border-gray-200 transition">
-                            <i class="fa-solid fa-location-dot text-ifood-500 text-sm"></i>
-                            <span class="truncate max-w-[200px]">Informe seu Flat / Quarto</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
+                    <!-- Lado Esquerdo: Mensagem de Impacto -->
+                    <div class="lg:col-span-7 space-y-6">
+                        <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-medium border border-white/20">
+                            <i class="fa-solid fa-bolt text-yellow-300"></i>
+                            <span>Mercadinho de Conveniência no seu Flat</span>
                         </div>
-                    </div>
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-none">
+                            Conecte sua estadia à praticidade total
+                        </h1>
+                        <p class="text-lg sm:text-xl text-red-100 max-w-2xl font-normal leading-relaxed">
+                            Pegue bebidas geladas, chocolates, vinhos e itens de higiene sem sair da sua acomodação. Pague via PIX e aproveite!
+                        </p>
 
-                    <!-- Navigation Links (Desktop) -->
-                    <nav class="hidden lg:flex items-center space-x-8 text-xs font-bold text-gray-600">
-                        <a href="#shop" onclick="switchRoute('shop')" class="hover:text-ifood-500 transition">Cardápio do Flat</a>
-                        <button onclick="openInfoModal()" class="hover:text-ifood-500 transition flex items-center gap-1">
-                            Como funciona <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
-                        </button>
-                        <button onclick="openInfoModal()" class="hover:text-ifood-500 transition flex items-center gap-1">
-                            Ajuda <i class="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
-                        </button>
-                    </nav>
-
-                    <!-- Header Action Buttons -->
-                    <div class="flex items-center space-x-3">
-                        <a href="#admin" onclick="switchRoute('admin')" class="border-2 border-ifood-500 text-ifood-500 hover:bg-red-50 font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-sm text-center">
-                            Entrar no Portal
-                        </a>
-                        <a href="#shop" onclick="switchRoute('shop')" class="bg-ifood-500 hover:bg-ifood-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-md transition text-center active:scale-95">
-                            Ver Cardápio
-                        </a>
-                    </div>
-                </div>
-            </header>
-
-            <!-- HERO MOSAIC SECTION -->
-            <section class="relative bg-ifood-900 text-white min-h-[580px] lg:min-h-[640px] flex items-center overflow-hidden">
-                
-                <!-- Mosaic Background Grid -->
-                <div class="absolute inset-0 grid grid-cols-2 md:grid-cols-4 grid-rows-2 opacity-90">
-                    <div class="relative overflow-hidden bg-ifood-800">
-                        <img src="https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&auto=format&fit=crop&q=80" alt="Cozinha" class="w-full h-full object-cover mix-blend-multiply opacity-60">
-                    </div>
-                    <div class="bg-ifood-900 flex items-center justify-center p-6 border-l border-red-900/40 relative">
-                        <div class="text-rose-400/20 text-8xl font-serif italic select-none">Menu</div>
-                    </div>
-                    <div class="relative overflow-hidden bg-ifood-700 hidden md:block">
-                        <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&auto=format&fit=crop&q=80" alt="Atendimento" class="w-full h-full object-cover mix-blend-multiply opacity-70">
-                    </div>
-                    <div class="relative overflow-hidden bg-ifood-600 hidden md:block">
-                        <img src="https://images.unsplash.com/photo-1617347454431-f49d7ff5c3b1?w=800&auto=format&fit=crop&q=80" alt="Entregador" class="w-full h-full object-cover mix-blend-multiply opacity-65">
-                    </div>
-                    <div class="bg-ifood-800 hidden md:flex items-center justify-center p-8 border-t border-red-900/40">
-                        <i class="fa-solid fa-store text-rose-500/30 text-7xl"></i>
-                    </div>
-                    <div class="bg-ifood-900 flex items-center justify-center p-6 border-t border-l border-red-900/40">
-                        <div class="text-white/20 text-6xl font-black tracking-tighter">ifood</div>
-                    </div>
-                    <div class="bg-ifood-800 hidden md:flex items-center justify-center p-6 border-t border-l border-red-900/40">
-                        <i class="fa-solid fa-heart text-rose-500/20 text-6xl"></i>
-                    </div>
-                    <div class="bg-ifood-700 hidden lg:flex items-center justify-center p-6 border-t border-l border-red-900/40">
-                        <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-xs">
-                            <span class="font-extrabold text-amber-300">Autoatendimento 24h</span>
-                            <p class="text-[11px] text-white/80 mt-1">Conveniência na palma da mão.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="absolute inset-0 bg-gradient-to-r from-ifood-900/95 via-ifood-900/80 to-transparent"></div>
-
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full z-10 relative">
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                        <div class="lg:col-span-7 space-y-4">
-                            <span class="inline-block bg-white/15 backdrop-blur-md text-amber-300 text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-wider border border-white/10">
-                                Conveniência Pegue e Pague
-                            </span>
-                            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight">
-                                Conecte sua loja a milhões de clientes
-                            </h1>
-                            <p class="text-base sm:text-lg text-rose-100 font-medium max-w-xl leading-relaxed">
-                                De Brasil e de comida a gente entende, vem pro iFood! Acesse o mini mercado completo da sua suíte 24h por dia.
-                            </p>
-                            <div class="pt-2 flex flex-wrap gap-3 items-center text-xs font-bold text-rose-200">
-                                <span class="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
-                                    <i class="fa-solid fa-bolt text-amber-400"></i> Pagamento PIX Instantâneo
-                                </span>
-                                <span class="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
-                                    <i class="fa-solid fa-door-open text-emerald-400"></i> Sem Espera / Direto no Quarto
-                                </span>
+                        <!-- Benefícios Rápidos -->
+                        <div class="grid grid-cols-3 gap-4 pt-4 border-t border-white/10 max-w-xl">
+                            <div>
+                                <h4 class="font-bold text-xl text-yellow-300">24/7</h4>
+                                <p class="text-xs text-red-100">Disponível a qualquer hora</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl text-yellow-300">PIX</h4>
+                                <p class="text-xs text-red-100">Pagamento Instantâneo</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xl text-yellow-300">Zero Espera</h4>
+                                <p class="text-xs text-red-100">Pegue direto no quarto</p>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="lg:col-span-5 w-full max-w-md mx-auto lg:ml-auto">
-                            <div class="bg-white text-gray-900 p-6 sm:p-8 rounded-3xl shadow-2xl border border-gray-100 space-y-5">
+                    <!-- Lado Direito: Card Flutuante de Acesso Rápido -->
+                    <div class="lg:col-span-5">
+                        <div class="bg-white text-ifood-darkText rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-100 space-y-6">
+                            <div class="space-y-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-ifood-red">Autoatendimento</span>
+                                <h2 class="text-2xl font-black">Acesse o Cardápio do Flat</h2>
+                                <p class="text-sm text-gray-500">Escolha os produtos do seu frigobar ou prateleira e pague de forma rápida.</p>
+                            </div>
+
+                            <div class="space-y-4">
                                 <div>
-                                    <h3 class="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-                                        Cadastre seu quarto ou acesse o cardápio
-                                    </h3>
-                                    <p class="text-xs text-gray-500 font-medium mt-1">
-                                        Entre e aproveite a conveniência exclusiva no seu flat!
-                                    </p>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seu Nome ou Número do Flat</label>
+                                    <input type="text" id="landingFlatInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-ifood-red focus:border-transparent outline-none transition text-sm">
                                 </div>
 
-                                <div class="space-y-3.5 pt-1">
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 mb-1">E-mail ou Nº do Quarto *</label>
-                                        <input type="text" id="landingInputEmail" placeholder="seuemail@exemplo.com.br ou Flat 102" 
-                                            class="w-full px-4 py-3 text-xs sm:text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-500 focus:outline-none font-medium">
-                                    </div>
+                                <button onclick="enterShopFromLanding()" class="w-full bg-ifood-red hover:bg-ifood-darkRed text-white font-bold py-4 rounded-xl transition shadow-lg text-base flex items-center justify-center space-x-2">
+                                    <span>Ver Produtos Disponíveis</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
 
-                                    <button onclick="accessShopFromLanding()" class="w-full bg-ifood-500 hover:bg-ifood-600 text-white font-extrabold py-3.5 rounded-xl text-xs sm:text-sm shadow-lg transition active:scale-[0.98]">
-                                        Acessar Cardápio Agora
-                                    </button>
+                                <div class="relative flex py-2 items-center">
+                                    <div class="flex-grow border-t border-gray-200"></div>
+                                    <span class="flex-shrink mx-4 text-xs font-semibold text-gray-400 uppercase">ou</span>
+                                    <div class="flex-grow border-t border-gray-200"></div>
                                 </div>
 
-                                <p class="text-[10px] text-gray-400 leading-tight">
-                                    Ao continuar, você concorda em receber comunicações da conveniência do flat. 
-                                    Confira nossa <a href="#" onclick="openInfoModal()" class="text-gray-600 underline font-bold">Declaração de Privacidade</a>.
-                                </p>
+                                <button onclick="window.location.hash = 'admin'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition text-xs flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <span>Acesso Administrativo (Lojista)</span>
+                                </button>
                             </div>
                         </div>
                     </div>
+
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- LANDING FEATURES STRIP -->
-            <section class="py-10 bg-gray-50 border-b border-gray-200">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm space-y-2">
-                            <div class="w-12 h-12 bg-red-50 text-ifood-500 rounded-2xl flex items-center justify-center text-xl mx-auto font-black">
-                                <i class="fa-solid fa-qrcode"></i>
-                            </div>
-                            <h4 class="font-black text-sm text-gray-900">1. Escaneie o QR Code</h4>
-                            <p class="text-xs text-gray-500">Acesse o cardápio no seu celular direto da mesa da suíte.</p>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm space-y-2">
-                            <div class="w-12 h-12 bg-red-50 text-ifood-500 rounded-2xl flex items-center justify-center text-xl mx-auto font-black">
-                                <i class="fa-solid fa-basket-shopping"></i>
-                            </div>
-                            <h4 class="font-black text-sm text-gray-900">2. Retire no Frigobar</h4>
-                            <p class="text-xs text-gray-500">Pegue os refrigerantes, vinhos e itens de higiene sem sair do quarto.</p>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-sm space-y-2">
-                            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mx-auto font-black">
-                                <i class="fa-solid fa-pix"></i>
-                            </div>
-                            <h4 class="font-black text-sm text-gray-900">3. Pague via PIX</h4>
-                            <p class="text-xs text-gray-500">Transfira instantaneamente e envie o comprovante no WhatsApp.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-
-        <!-- ========================================== -->
-        <!-- VIEW 1: CLIENT STORE / CARDÁPIO (iFood Style) -->
-        <!-- ========================================== -->
-        <div id="shopView" class="flex-1 flex flex-col pb-28 hidden max-w-md mx-auto w-full border-x border-gray-200 shadow-xl bg-white">
+        <!-- 2. CARDÁPIO / SHOP VIEW (#shop) -->
+        <section id="viewShop" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             
-            <!-- iFood TOP STORE HEADER -->
-            <header class="bg-ifood-500 text-white sticky top-0 z-30 shadow-md">
-                <div class="px-4 pt-3 pb-2 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <button onclick="switchRoute('landing')" class="text-white hover:text-red-100 p-1" title="Voltar ao início">
-                            <i class="fa-solid fa-arrow-left text-lg"></i>
-                        </button>
-                        <div class="w-10 h-10 rounded-2xl bg-white text-ifood-500 flex items-center justify-center font-black text-xl shadow-inner border-2 border-red-100">
-                            <i class="fa-solid fa-store"></i>
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-1.5">
-                                <h1 class="font-extrabold text-base tracking-tight leading-none" id="storeNameDisplay">Conveniência do Flat</h1>
-                                <span class="bg-white/20 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">24h</span>
-                            </div>
-                            <p class="text-[11px] text-red-100 mt-1 flex items-center gap-1 font-medium">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                Autoatendimento • Pegue e Pague
-                            </p>
-                        </div>
-                    </div>
-                    
+            <!-- Banner do Estabelecimento -->
+            <div class="bg-gradient-to-r from-red-600 to-ifood-red rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 space-y-3">
                     <div class="flex items-center space-x-2">
-                        <button onclick="openInfoModal()" class="bg-white/15 hover:bg-white/25 text-white p-2 rounded-xl text-xs transition flex items-center justify-center h-9 px-2.5 font-bold gap-1 shadow-sm" title="Como Funciona">
-                            <i class="fa-solid fa-circle-info text-sm"></i>
-                            <span class="text-[11px]">Ajuda</span>
-                        </button>
-
-                        <button onclick="openCartDrawer()" class="relative bg-white text-ifood-500 hover:bg-red-50 p-2 rounded-xl text-xs transition flex items-center justify-center h-9 px-3 font-extrabold shadow" title="Ver Carrinho">
-                            <i class="fa-solid fa-bag-shopping text-base"></i>
-                            <span id="headerCartBadge" class="ml-1.5 bg-ifood-500 text-white text-[10px] min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center font-black">0</span>
-                        </button>
+                        <span class="bg-yellow-400 text-gray-900 font-extrabold text-xs px-2.5 py-1 rounded-md">⭐ 4.9</span>
+                        <span class="text-xs bg-white/20 backdrop-blur-md px-3 py-1 rounded-full font-medium">Mini Mercado Exclusivo</span>
                     </div>
-                </div>
-
-                <!-- STORE RATING & INFO STRIP -->
-                <div class="px-4 pb-2.5 pt-1 flex items-center justify-between text-xs text-red-100 border-t border-red-400/30 font-medium">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-amber-400 text-gray-900 font-extrabold text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                            <i class="fa-solid fa-star text-[9px]"></i> 4.9
-                        </span>
-                        <span class="text-[11px] text-white/90">No seu quarto • Sem espera</span>
-                        <span id="cloudStatusBadge" class="text-[9px] bg-emerald-700/80 text-emerald-100 px-1.5 py-0.5 rounded flex items-center gap-1">
-                            <i class="fa-solid fa-cloud text-[8px]"></i> Nuvem 
-                        </span>
-                    </div>
-                    <button onclick="openQrModal()" class="text-[11px] font-bold text-white underline decoration-white/50 hover:text-red-100 flex items-center gap-1">
-                        <i class="fa-solid fa-qrcode text-[10px]"></i> Placa QR
-                    </button>
-                </div>
-
-                <!-- SEARCH BAR -->
-                <div class="px-4 pb-3">
-                    <div class="relative">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-sm"></i>
-                        <input type="text" id="searchInput" oninput="renderProducts()" placeholder="Buscar Coca-Cola, Vinho, Snacks, Escova..." 
-                            class="w-full pl-10 pr-4 py-2.5 rounded-2xl text-gray-900 bg-white placeholder-gray-400 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-lg">
-                        <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 text-xs p-0.5">
-                            <i class="fa-solid fa-circle-xmark text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <!-- CATEGORIES SCROLL BAR -->
-            <nav class="bg-white border-b border-gray-200 sticky top-[138px] z-20 shadow-sm">
-                <div class="px-3 py-3 flex space-x-2 overflow-x-auto no-scrollbar" id="categoryTabs">
-                    <!-- Dynamic Category Tabs -->
-                </div>
-            </nav>
-
-            <!-- MAIN STORE CONTENT -->
-            <main class="px-4 pt-4 flex-1">
-                
-                <!-- HERO BANNER AUTOATENDIMENTO -->
-                <div class="bg-gradient-to-r from-ifood-600 via-rose-600 to-red-500 rounded-2xl p-4 text-white shadow-xl mb-5 relative overflow-hidden">
-                    <div class="z-10 relative max-w-[72%]">
-                        <span class="bg-white/20 backdrop-blur-md text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">Conveniente & Prático</span>
-                        <h2 class="font-black text-base mt-1.5 leading-tight">Retire direto na sua suíte!</h2>
-                        <p class="text-xs text-rose-100 mt-1 leading-snug">Escolha os itens disponíveis no seu quarto e pague agora via PIX.</p>
-                        
-                        <div class="mt-3 flex items-center gap-2">
-                            <span class="bg-white text-ifood-600 text-[10px] font-black px-2.5 py-1 rounded-lg shadow flex items-center gap-1">
-                                <i class="fa-solid fa-bolt text-amber-500"></i> Pagamento Instantâneo
-                            </span>
-                        </div>
-                    </div>
-                    <div class="absolute right-[-10px] bottom-[-10px] text-7xl text-white/15 transform -rotate-12 pointer-events-none">
-                        <i class="fa-solid fa-wine-bottle"></i>
-                    </div>
-                </div>
-
-                <!-- PRODUCTS CONTAINER LIST -->
-                <div id="productsContainer" class="space-y-3">
-                    <!-- Dynamic Product Cards -->
-                </div>
-            </main>
-
-            <!-- FOOTER DISCREET ADMIN LINK -->
-            <footer class="mt-8 mb-4 px-4 text-center">
-                <p class="text-xs text-gray-400 font-medium">Conveniência Autoatendimento Flat 24h</p>
-                <a href="#admin" onclick="switchRoute('admin')" class="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-ifood-500 mt-2 font-semibold transition">
-                    <i class="fa-solid fa-lock text-[10px]"></i> Área Administrativa
-                </a>
-            </footer>
-
-            <!-- FLOATING BOTTOM CART BAR -->
-            <div id="cartBar" class="fixed bottom-0 left-0 right-0 z-40 p-4 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none transition-all duration-300 transform translate-y-full max-w-md mx-auto">
-                <div class="pointer-events-auto">
-                    <button onclick="openCartDrawer()" class="w-full bg-ifood-500 hover:bg-ifood-600 text-white rounded-2xl p-3.5 shadow-2xl flex items-center justify-between font-bold text-sm transition active:scale-[0.98]">
-                        <div class="flex items-center space-x-3">
-                            <div class="relative">
-                                <i class="fa-solid fa-basket-shopping text-lg"></i>
-                                <span id="cartCountBadge" class="absolute -top-2 -right-2.5 bg-amber-400 text-gray-900 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black shadow">0</span>
-                            </div>
-                            <span class="font-extrabold text-sm ml-1">Ver Sacola</span>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span id="cartTotalHeader" class="text-base font-black">R$ 0,00</span>
-                            <i class="fa-solid fa-chevron-right text-xs"></i>
-                        </div>
-                    </button>
+                    <h1 class="text-3xl sm:text-4xl font-black">Conveniente & Gelado no seu Flat</h1>
+                    <p class="text-sm text-red-100 max-w-xl">
+                        Pegue o item diretamente na sua acomodação, adicione ao carrinho e efetue o pagamento via PIX.
+                    </p>
                 </div>
             </div>
-        </div>
 
+            <!-- Categorias (Barra Deslizante Estilo iFood) -->
+            <div class="flex space-x-3 overflow-x-auto hide-scrollbar py-2">
+                <button onclick="filterCategory('Todas')" class="cat-btn active bg-ifood-red text-white px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:opacity-90 transition">
+                    🔥 Todas
+                </button>
+                <button onclick="filterCategory('Bebidas')" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                    🥤 Bebidas Geladas
+                </button>
+                <button onclick="filterCategory('Vinhos')" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                    🍷 Vinhos & Espumantes
+                </button>
+                <button onclick="filterCategory('Snacks')" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                    🍫 Chocolates & Snacks
+                </button>
+                <button onclick="filterCategory('Higiene')" class="cat-btn bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-2xl font-bold text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition">
+                    🪥 Higiene Pessoal
+                </button>
+            </div>
 
-        <!-- ========================================== -->
-        <!-- VIEW 2: SEPARATE PROTECTED ADMIN PANEL     -->
-        <!-- ========================================== -->
-        <div id="adminView" class="flex-1 flex flex-col hidden bg-gray-50 min-h-screen w-full">
+            <!-- Busca Rápida -->
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="searchInput" onkeyup="searchProducts()" placeholder="Buscar refrigerante, chocolate, vinho, escova..." class="w-full pl-11 pr-4 py-3.5 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-ifood-red text-sm shadow-sm">
+            </div>
+
+            <!-- Grid de Produtos -->
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                <!-- Inserido dinamicamente via JS -->
+            </div>
+        </section>
+
+        <!-- 3. ÁREA ADMINISTRATIVA (#admin) -->
+        <section id="viewAdmin" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             
-            <!-- ADMIN TOP BAR -->
-            <header class="bg-gray-900 text-white p-4 sticky top-0 z-30 shadow-md flex items-center justify-between">
-                <div class="flex items-center space-x-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-ifood-500 text-white flex items-center justify-center font-bold text-sm">
-                        <i class="fa-solid fa-sliders"></i>
+            <!-- Tela de Login de Segurança -->
+            <div id="adminAuthBox" class="max-w-md mx-auto bg-white rounded-3xl p-8 shadow-xl border border-gray-100 space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-16 h-16 bg-red-100 text-ifood-red rounded-full flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-user-shield"></i>
                     </div>
-                    <div>
-                        <h2 class="font-bold text-sm leading-tight">Painel Administrativo</h2>
-                        <p class="text-[10px] text-gray-400">Gestão em Nuvem em Tempo Real</p>
-                    </div>
+                    <h2 class="text-2xl font-black">Portal do Proprietário</h2>
+                    <p class="text-xs text-gray-500">Digite a senha master para gerenciar produtos, preços e QR Codes.</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="switchRoute('landing')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition border border-gray-700">
-                        <i class="fa-solid fa-house text-gray-400"></i> Início
-                    </button>
-                    <button onclick="switchRoute('shop')" class="bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition border border-gray-700">
-                        <i class="fa-solid fa-store text-ifood-500"></i> Loja
-                    </button>
-                </div>
-            </header>
 
-            <!-- ADMIN AUTH LOGIN SCREEN -->
-            <div id="adminAuthContainer" class="p-6 flex-1 flex flex-col items-center justify-center">
-                <div class="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 shadow-xl w-full max-w-sm text-center space-y-4">
-                    <div class="w-16 h-16 bg-red-50 text-ifood-500 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
-                        <i class="fa-solid fa-lock"></i>
-                    </div>
+                <div class="space-y-4">
                     <div>
-                        <h3 class="font-black text-gray-900 text-lg">Acesso Restrito</h3>
-                        <p class="text-xs text-gray-500 mt-1">Informe a senha para gerenciar preços, produtos e configurações do flat em tempo real.</p>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Senha de Acesso</label>
+                        <input type="password" id="adminPasswordInput" placeholder="Sua senha secreta" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-ifood-red outline-none text-sm">
                     </div>
-                    <div class="space-y-3 pt-2">
-                        <input type="password" id="adminPasswordInput" placeholder="Digite a senha de acesso" 
-                            class="w-full px-4 py-3 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-500 focus:outline-none text-center font-bold tracking-wider">
-                        <button onclick="authenticateAdmin()" class="w-full bg-ifood-500 text-white font-bold py-3 rounded-xl text-xs hover:bg-ifood-600 transition shadow-md active:scale-95">
-                            Acessar Painel
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-gray-400">Protegido por autenticação hexadecimal</p>
+                    <button onclick="verificarSenhaHex()" class="w-full bg-ifood-red hover:bg-ifood-darkRed text-white font-bold py-3.5 rounded-xl transition text-sm shadow-md">
+                        Entrar no Portal
+                    </button>
                 </div>
             </div>
 
-            <!-- ADMIN DASHBOARD MAIN CONTENT -->
-            <div id="adminDashboardContainer" class="p-4 sm:p-6 max-w-4xl mx-auto w-full flex-1 space-y-4 hidden overflow-y-auto">
+            <!-- Painel Administrativo Autenticado -->
+            <div id="adminDashboard" class="hidden space-y-6">
                 
-                <!-- ALERT BANNER FOR FIREBASE STATUS -->
-                <div id="firebaseCloudAlert" class="hidden bg-amber-50 border border-amber-300 p-3.5 rounded-2xl text-xs text-amber-900 space-y-1">
-                    <div class="font-extrabold flex items-center gap-1.5">
-                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Atenção: A Sincronização em Nuvem precisa de ajuste no Firebase Console!
-                    </div>
-                    <p id="firebaseCloudAlertMsg" class="text-[11px] text-amber-800 leading-relaxed"></p>
-                </div>
-
-                <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <!-- Cabeçalho Admin -->
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1 w-max">
-                            <i class="fa-solid fa-cloud text-[9px]"></i> Sincronizado na Nuvem
-                        </span>
-                        <h3 class="font-extrabold text-gray-800 text-base mt-1">Gerenciador de Vendas & Cardápio</h3>
+                        <h2 class="text-2xl font-black">Gerenciador do Mercado</h2>
+                        <p class="text-xs text-gray-500">Altere preços, estoque e formas de pagamento em tempo real.</p>
                     </div>
-                    <button onclick="logoutAdmin()" class="text-xs text-red-500 hover:text-red-700 font-bold bg-red-50 px-2.5 py-1.5 rounded-xl border border-red-100 flex items-center gap-1">
-                        <i class="fa-solid fa-right-from-bracket"></i> Sair
-                    </button>
-                </div>
 
-                <!-- Admin Tabs -->
-                <div class="flex border-b border-gray-200 bg-white rounded-2xl p-1 shadow-sm gap-1">
-                    <button id="adminTabProdsBtn" onclick="switchAdminTab('products')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-ifood-500 text-white transition">
-                        <i class="fa-solid fa-boxes-stacked"></i> Produtos
-                    </button>
-                    <button id="adminTabConfigBtn" onclick="switchAdminTab('config')" class="flex-1 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition">
-                        <i class="fa-solid fa-gear"></i> Configurações
-                    </button>
-                    <button id="adminTabPlaqueBtn" onclick="switchAdminTab('plaque')" class="flex-1 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition">
-                        <i class="fa-solid fa-qrcode"></i> Placa QR
-                    </button>
-                </div>
-
-                <!-- TAB 1: PRODUCT & PRICE MANAGEMENT -->
-                <div id="adminTabProducts" class="space-y-3">
-                    <div class="flex items-center justify-between bg-white p-3 rounded-2xl border">
-                        <div>
-                            <h4 class="font-bold text-xs text-gray-800">Catálogo de Produtos (<span id="adminProdCount">0</span>)</h4>
-                            <p class="text-[10px] text-gray-400">Ajustes salvam instantaneamente em todos os celulares de hóspedes</p>
-                        </div>
-                        <button onclick="openProductEditModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-3 py-2 rounded-xl shadow flex items-center gap-1 transition">
-                            <i class="fa-solid fa-plus"></i> Novo Produto
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openProductEditModal()" class="bg-ifood-red hover:bg-ifood-darkRed text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Novo Produto</span>
                         </button>
-                    </div>
-
-                    <!-- Products List for Admin -->
-                    <div id="adminProductList" class="space-y-2">
-                        <!-- Dynamic Admin Products -->
-                    </div>
-                </div>
-
-                <!-- TAB 2: GENERAL STORE CONFIGURATION -->
-                <div id="adminTabConfig" class="space-y-3 hidden">
-                    <div class="bg-white p-4 sm:p-6 rounded-2xl border space-y-3">
-                        <h4 class="font-bold text-xs sm:text-sm text-gray-800 border-b pb-2 flex items-center gap-1.5">
-                            <i class="fa-solid fa-wrench text-ifood-500"></i> Dados da Operação do Flat
-                        </h4>
-                        
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Nome da Loja / Flat</label>
-                            <input type="text" id="adminStoreNameInput" class="w-full px-3 py-2 text-xs border rounded-xl font-medium focus:ring-2 focus:ring-ifood-500 focus:outline-none">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">WhatsApp para Receber Confirmações (com DDD)</label>
-                            <input type="text" id="adminPhoneInput" placeholder="Ex: 5563999999999" class="w-full px-3 py-2 text-xs border rounded-xl font-mono focus:ring-2 focus:ring-ifood-500 focus:outline-none">
-                            <p class="text-[10px] text-gray-400 mt-0.5">Insira com código do país (Ex: 55 para Brasil + DDD + número).</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Chave PIX Principal (CPF/Telefone/Email)</label>
-                            <input type="text" id="adminPixInput" value="03137189110" class="w-full px-3 py-2 text-xs border rounded-xl font-mono font-bold focus:ring-2 focus:ring-ifood-500 focus:outline-none">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Senha do Painel Admin</label>
-                            <input type="text" id="adminPassConfigInput" class="w-full px-3 py-2 text-xs border rounded-xl font-mono focus:ring-2 focus:ring-ifood-500 focus:outline-none">
-                        </div>
-
-                        <button onclick="saveAdminSettings()" class="w-full bg-ifood-500 text-white font-extrabold py-3 rounded-xl text-xs hover:bg-ifood-600 transition shadow-md">
-                            <i class="fa-solid fa-floppy-disk"></i> Salvar Configurações na Nuvem
+                        <button onclick="openQrModal()" class="bg-gray-800 hover:bg-black text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span>Gerar Placa QR Code</span>
+                        </button>
+                        <button onclick="logoutAdmin()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+                            Sair
                         </button>
                     </div>
                 </div>
 
-                <!-- TAB 3: TABLE PLAQUE / QR CODE PRINT GENERATOR -->
-                <div id="adminTabPlaque" class="space-y-3 hidden">
-                    <div class="bg-white p-4 sm:p-6 rounded-2xl border space-y-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-bold text-xs text-gray-800">Placa Imprimível para os Quartos</h4>
-                            <button onclick="printQrPlaque()" class="bg-gray-900 text-white text-xs px-3 py-1.5 rounded-xl font-bold flex items-center gap-1 shadow">
-                                <i class="fa-solid fa-print"></i> Imprimir Placa
+                <!-- Abas Admin -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-6">
+                    <div class="flex space-x-4 border-b border-gray-200 pb-4">
+                        <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2">
+                            📦 Lista de Produtos
+                        </button>
+                        <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="font-bold text-sm text-gray-500 hover:text-gray-700 pb-2">
+                            ⚙️ Configurações & Teste Nuvem
+                        </button>
+                    </div>
+
+                    <!-- Conteúdo Aba Produtos -->
+                    <div id="tabContentProducts" class="space-y-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-xs">
+                                    <tr>
+                                        <th class="p-3 rounded-l-xl">Produto</th>
+                                        <th class="p-3">Categoria</th>
+                                        <th class="p-3">Preço (R$)</th>
+                                        <th class="p-3">Tag/Selo</th>
+                                        <th class="p-3 text-right rounded-r-xl">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminProductTable" class="divide-y divide-gray-100">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo Aba Configurações -->
+                    <div id="tabContentSettings" class="hidden space-y-6 max-w-xl">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp para Receber Pedidos</label>
+                                <input type="text" id="adminPhoneInput" placeholder="Ex: 5531999999999" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Chave PIX Oficial (CPF/CNPJ/Telefone/Email)</label>
+                                <input type="text" id="adminPixInput" value="03137189110" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm">
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100 space-y-3">
+                                <h4 class="font-bold text-sm text-gray-800">Diagnóstico do Firebase Database</h4>
+                                <button onclick="testFirebaseConnection()" type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition flex items-center space-x-2">
+                                    <i class="fa-solid fa-signal"></i>
+                                    <span>Testar Conexão em Tempo Real</span>
+                                </button>
+                                <p id="firebaseDiagResult" class="text-xs font-medium text-gray-500 italic"></p>
+                            </div>
+
+                            <div class="pt-2">
+                                <button onclick="saveStoreSettings()" class="bg-ifood-red text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-ifood-darkRed transition shadow-sm">
+                                    Salvar Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DE CARRINHO E CHECKOUT -->
+    <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex justify-end">
+        <div class="bg-white w-full max-w-md h-full flex flex-col justify-between p-6 shadow-2xl overflow-y-auto">
+            
+            <div class="space-y-6">
+                <!-- Topo do Carrinho -->
+                <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-basket-shopping text-ifood-red text-xl"></i>
+                        <h3 class="font-black text-xl">Seu Consumo</h3>
+                    </div>
+                    <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Lista de Itens do Carrinho -->
+                <div id="cartItemsList" class="space-y-3">
+                    <!-- Itens via JS -->
+                </div>
+            </div>
+
+            <!-- Rodapé e Checkout -->
+            <div class="border-t border-gray-100 pt-4 space-y-4 mt-6">
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm text-gray-500">
+                        <span>Subtotal</span>
+                        <span id="cartSubtotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-lg font-black text-ifood-darkText">
+                        <span>Total a Pagar</span>
+                        <span id="cartTotal" class="text-ifood-red">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Informações do Hóspede -->
+                <div class="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seu Nome e Flat/Quarto*</label>
+                        <input type="text" id="guestInfoInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-3 py-2 bg-white rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                    </div>
+
+                    <!-- Caixa de Pagamento PIX -->
+                    <div class="bg-white p-3 rounded-xl border border-emerald-200 space-y-2 text-center">
+                        <span class="text-xs font-bold text-emerald-700 block uppercase">Pagamento Instantâneo PIX</span>
+                        <div class="flex items-center justify-between bg-emerald-50 px-3 py-2 rounded-lg text-xs font-mono border border-emerald-100">
+                            <span id="pixKeyDisplay" class="font-bold text-emerald-900">03137189110</span>
+                            <button onclick="copyPixKey()" class="text-emerald-700 hover:text-emerald-900 font-bold underline ml-2">
+                                Copiar
                             </button>
                         </div>
-
-                        <div id="printablePlaque" class="bg-gradient-to-b from-gray-50 via-white to-red-50/30 p-6 rounded-3xl border-2 border-ifood-500 text-center space-y-4 shadow-lg max-w-md mx-auto">
-                            <div>
-                                <span class="bg-ifood-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">Mini Mercado do Flat</span>
-                                <h2 class="text-2xl font-black text-gray-900 mt-2 tracking-tight">Autoatendimento 24h</h2>
-                                <p class="text-xs text-gray-600 font-medium mt-1">Aponte a câmera do seu celular para abrir o cardápio e pagar no PIX</p>
-                            </div>
-
-                            <div class="bg-white p-3 rounded-2xl inline-block border-2 border-ifood-500 shadow-md">
-                                <img id="adminMenuQrImage" src="" alt="QR Code Cardápio" class="w-48 h-48 mx-auto rounded-xl">
-                            </div>
-
-                            <div class="bg-red-50 border border-red-200 rounded-2xl p-3 text-left space-y-1 max-w-xs mx-auto">
-                                <p class="text-[11px] font-bold text-red-900 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-bolt text-ifood-500"></i> Chave PIX do Flat:
-                                </p>
-                                <p class="text-sm font-mono font-black text-gray-800 bg-white p-2 rounded-xl border border-red-200 text-center" id="adminPlaquePixDisplay">03137189110</p>
-                            </div>
-
-                            <p class="text-[10px] text-gray-400 italic">Pegue o produto na sua suíte • Escaneie • Pague via PIX</p>
-                        </div>
                     </div>
                 </div>
 
+                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-2xl transition shadow-lg flex items-center justify-center space-x-2 text-sm">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span>Confirmar & Enviar no WhatsApp</span>
+                </button>
             </div>
-        </div>
 
+        </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODALS & DRAWER                            -->
-    <!-- ========================================== -->
-    <!-- MODAL 1: SHOPPING CART DRAWER -->
-    <div id="cartDrawer" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex justify-end flex-col hidden transition-opacity duration-300">
-        <div onclick="closeCartDrawer()" class="flex-1"></div>
-        <div class="bg-white rounded-t-3xl max-w-md w-full mx-auto max-h-[90vh] flex flex-col shadow-2xl animate-slide-up">
-            <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50 rounded-t-3xl">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-basket-shopping text-ifood-500 text-xl"></i>
-                    <div>
-                        <h3 class="font-extrabold text-gray-900 text-base leading-none">Sua Sacola de Consumo</h3>
-                        <p class="text-[11px] text-gray-500 mt-0.5">Confirme os itens retirados no seu quarto</p>
-                    </div>
-                </div>
-                <button onclick="closeCartDrawer()" class="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center hover:bg-gray-300 transition">
+    <!-- MODAL DE CADASTRO / EDIÇÃO DE PRODUTO -->
+    <div id="productEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+                <h3 id="productModalTitle" class="font-black text-xl">Cadastrar / Editar Produto</h3>
+                <button onclick="closeProductEditModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <div id="cartItemsContainer" class="p-4 overflow-y-auto flex-1 divide-y divide-gray-100">
-                <!-- Cart items rendered dynamically -->
-            </div>
+            <form onsubmit="event.preventDefault(); saveProductFromModal();" class="space-y-4">
+                <input type="hidden" id="editProdId">
 
-            <div class="p-4 border-t border-gray-200 bg-gray-50 space-y-3.5">
-                <div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5">
-                    <i class="fa-solid fa-hand-holding-heart text-amber-600 mt-0.5 text-base"></i>
-                    <div class="leading-tight">
-                        <strong class="font-extrabold block mb-0.5">Autoatendimento (Pegue e Pague):</strong> 
-                        Retire os itens da sua suíte e conclua a transferência no seu banco abaixo.
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Seu Nome *</label>
-                        <input type="text" id="customerName" placeholder="Ex: Carlos Silva" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-500 focus:outline-none font-medium">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Nº do Flat / Quarto *</label>
-                        <input type="text" id="roomNumber" placeholder="Ex: Flat 102" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-ifood-500 focus:outline-none font-medium">
-                    </div>
-                </div>
-
-                <div id="pixContainer" class="bg-red-50/80 border border-red-200 p-3.5 rounded-2xl space-y-2.5">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="font-extrabold text-red-900 flex items-center gap-1.5 text-sm">
-                            <i class="fa-solid fa-qrcode text-ifood-500"></i> Pagamento via PIX
-                        </span>
-                        <span class="text-[10px] font-bold text-ifood-600 bg-red-100 px-2 py-0.5 rounded-full">Chave PIX</span>
-                    </div>
-
-                    <div class="bg-white p-3 rounded-xl border border-red-200 text-center space-y-2">
-                        <p class="text-[11px] font-bold text-gray-700">Escanear com o App do seu Banco:</p>
-                        <div class="flex justify-center">
-                            <img id="pixQrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=03137189110" alt="QR Code PIX" class="w-36 h-36 rounded-xl border p-1 bg-white shadow-sm">
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-2.5 rounded-xl border border-red-200 space-y-1.5">
-                        <label class="block text-[11px] text-gray-500 font-semibold">Ou Copiar Chave PIX (CPF/Telefone):</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="pixKeyDisplay" readonly value="03137189110" class="flex-1 text-sm font-black font-mono bg-gray-50 border rounded-xl px-3 py-2 text-gray-800 select-all">
-                            <button onclick="copyPixKey()" class="bg-ifood-500 hover:bg-ifood-600 text-white text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition">
-                                <i class="fa-regular fa-copy"></i> Copiar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center pt-1">
-                    <span class="text-gray-600 text-xs font-bold">Total a Pagar:</span>
-                    <span id="cartDrawerTotal" class="text-2xl font-black text-ifood-500">R$ 0,00</span>
-                </div>
-
-                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-xl flex items-center justify-center space-x-2 text-sm transition active:scale-[0.98]">
-                    <i class="fa-brands fa-whatsapp text-xl"></i>
-                    <span>Enviar Comprovante pelo WhatsApp</span>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL 2: PRODUCT EDIT MODAL -->
-    <div id="productEditModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-extrabold text-base text-gray-900" id="productModalTitle">Cadastrar Produto</h3>
-                <button onclick="closeProductEditModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <input type="hidden" id="editProdId">
-            <div class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">Nome do Produto *</label>
-                    <input type="text" id="editProdName" placeholder="Ex: Coca-Cola Zero 350ml" class="w-full px-3 py-2 border rounded-xl font-medium focus:ring-2 focus:ring-ifood-500 focus:outline-none">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome do Produto*</label>
+                    <input type="text" id="editProdName" required placeholder="Ex: Coca-Cola Zero Lata" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block font-bold text-gray-700 mb-1">Preço (R$) *</label>
-                        <input type="number" step="0.50" id="editProdPrice" placeholder="7.00" class="w-full px-3 py-2 border rounded-xl font-bold text-gray-900 focus:ring-2 focus:ring-ifood-500 focus:outline-none">
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Preço (R$)*</label>
+                        <input type="number" step="0.50" id="editProdPrice" required placeholder="7.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                     </div>
                     <div>
-                        <label class="block font-bold text-gray-700 mb-1">Categoria *</label>
-                        <select id="editProdCategory" class="w-full px-2 py-2 border rounded-xl font-medium focus:ring-2 focus:ring-ifood-500 focus:outline-none bg-white">
-                            <option value="Bebidas">Bebidas</option>
-                            <option value="Vinhos & Espumantes">Vinhos & Espumantes</option>
-                            <option value="Snacks & Doces">Snacks & Doces</option>
-                            <option value="Higiene Pessoal">Higiene Pessoal</option>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria*</label>
+                        <select id="editProdCategory" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                            <option value="Bebidas">🥤 Bebidas</option>
+                            <option value="Vinhos">🍷 Vinhos & Espumantes</option>
+                            <option value="Snacks">🍫 Chocolates & Snacks</option>
+                            <option value="Higiene">🪥 Higiene Pessoal</option>
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">Descrição Curta</label>
-                    <input type="text" id="editProdDesc" placeholder="Ex: Lata gelada 350ml" class="w-full px-3 py-2 border rounded-xl font-medium focus:ring-2 focus:ring-ifood-500 focus:outline-none">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">URL da Imagem</label>
+                    <input type="url" id="editProdImage" placeholder="https://images.unsplash.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">Selo / Tag de Destaque (Opcional)</label>
-                    <input type="text" id="editProdTag" placeholder="Ex: Gelada, Mais Vendido, Recomendado" class="w-full px-3 py-2 border rounded-xl font-medium focus:ring-2 focus:ring-ifood-500 focus:outline-none">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Curta</label>
+                    <input type="text" id="editProdDesc" placeholder="Ex: Lata 350ml gelada" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                 </div>
 
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">URL da Imagem</label>
-                    <input type="text" id="editProdImage" placeholder="https://..." class="w-full px-3 py-2 border rounded-xl font-mono text-[11px] focus:ring-2 focus:ring-ifood-500 focus:outline-none">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Selo / Tag Destaque</label>
+                    <input type="text" id="editProdTag" placeholder="Ex: Gelada, Casal, Mais Vendido" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="closeProductEditModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-ifood-red hover:bg-ifood-darkRed text-white font-bold rounded-xl text-xs shadow-md">
+                        Salvar Produto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PLACA QR CODE -->
+    <div id="qrModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-6 shadow-2xl">
+            <div id="plaquePrintArea" class="space-y-4 p-4 border-2 border-dashed border-gray-200 rounded-2xl">
+                <div class="bg-ifood-red text-white font-black text-2xl py-2 px-4 rounded-xl inline-block">
+                    FlatFood 24h
+                </div>
+                <h4 class="font-extrabold text-lg">Mini Mercado no Flat</h4>
+                <p class="text-xs text-gray-500">Leia o QR Code abaixo para acessar o cardápio e efetuar o pagamento do seu consumo.</p>
+                
+                <div id="qrcodeCanvas" class="flex justify-center py-2"></div>
+
+                <div class="text-xs font-mono font-bold bg-gray-100 p-2 rounded-lg text-gray-700">
+                    PIX: 03137189110
                 </div>
             </div>
 
-            <div class="flex gap-2 pt-2">
-                <button onclick="closeProductEditModal()" class="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl text-xs hover:bg-gray-200">
-                    Cancelar
+            <div class="flex justify-center space-x-3">
+                <button onclick="window.print()" class="bg-gray-800 text-white font-bold px-4 py-2 rounded-xl text-xs">
+                    <i class="fa-solid fa-print mr-1"></i> Imprimir Placa
                 </button>
-                <button onclick="saveProductFromModal()" class="flex-1 bg-ifood-500 text-white font-extrabold py-2.5 rounded-xl text-xs hover:bg-ifood-600 shadow">
-                    Salvar na Nuvem
+                <button onclick="closeQrModal()" class="bg-gray-100 text-gray-700 font-bold px-4 py-2 rounded-xl text-xs">
+                    Fechar
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- MODAL 3: COMO FUNCIONA / AJUDA -->
-    <div id="infoModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-extrabold text-base text-gray-900 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-question text-ifood-500"></i> Como Funciona?
-                </h3>
-                <button onclick="closeInfoModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
+    <!-- TOAST NOTIFICAÇÃO -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold hidden z-50 transition transform"></div>
 
-            <div class="space-y-3 text-xs text-gray-700 leading-relaxed">
-                <div class="flex items-start gap-3 bg-red-50 p-3 rounded-2xl border border-red-100">
-                    <span class="w-6 h-6 rounded-full bg-ifood-500 text-white flex items-center justify-center font-black flex-shrink-0">1</span>
-                    <p><strong>Retire o Produto:</strong> O frigobar/gaveteiro do seu flat está equipado. Pegue o que desejar consumir.</p>
-                </div>
-                <div class="flex items-start gap-3 bg-red-50 p-3 rounded-2xl border border-red-100">
-                    <span class="w-6 h-6 rounded-full bg-ifood-500 text-white flex items-center justify-center font-black flex-shrink-0">2</span>
-                    <p><strong>Adicione à Sacola:</strong> Selecione os itens correspondentes aqui neste cardápio digital.</p>
-                </div>
-                <div class="flex items-start gap-3 bg-red-50 p-3 rounded-2xl border border-red-100">
-                    <span class="w-6 h-6 rounded-full bg-ifood-500 text-white flex items-center justify-center font-black flex-shrink-0">3</span>
-                    <p><strong>Pague via PIX:</strong> Faça a transferência usando a Chave ou o QR Code no checkout e envie a confirmação no WhatsApp.</p>
-                </div>
-            </div>
-
-            <button onclick="closeInfoModal()" class="w-full bg-ifood-500 text-white font-extrabold py-3 rounded-xl text-xs hover:bg-ifood-600 transition shadow">
-                Entendi, Acessar Cardápio
-            </button>
-        </div>
-    </div>
-
-    <!-- MODAL 4: QR CODE PREVIEW MODAL -->
-    <div id="qrModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="font-extrabold text-base text-gray-900 flex items-center gap-2">
-                    <i class="fa-solid fa-qrcode text-ifood-500"></i> QR Code do Cardápio
-                </h3>
-                <button onclick="closeQrModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <div class="text-center space-y-3">
-                <p class="text-xs text-gray-600">Compartilhe este QR Code para acesso rápido ao cardápio de qualquer celular:</p>
-                <div class="bg-white p-3 rounded-2xl inline-block border-2 border-ifood-500 shadow-md">
-                    <img id="menuQrImage" src="" alt="QR Code" class="w-44 h-44 mx-auto rounded-xl">
-                </div>
-                <p class="text-[11px] font-mono font-bold text-gray-700 bg-gray-100 p-2 rounded-xl">Chave PIX: <span id="qrModalPixDisplay">03137189110</span></p>
-            </div>
-
-            <button onclick="closeQrModal()" class="w-full bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl text-xs hover:bg-gray-200">
-                Fechar
-            </button>
-        </div>
-    </div>
-
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center space-x-2 transition-all duration-300 opacity-0 pointer-events-none transform -translate-y-4 border border-gray-700">
-        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
-        <span id="toastMessage">Ação realizada!</span>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- FIREBASE / FIRESTORE REAL-TIME CLOUD SCRIPT-->
-    <!-- ========================================== -->
+    <!-- FIREBASE MODULES & APP SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // APP STATE & DEFAULTS
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'flatfood-app';
+        let firebaseConfig = {
+            projectId: "flatfood-d4296",
+            authDomain: "flatfood-d4296.firebaseapp.com",
+            storageBucket: "flatfood-d4296.firebasestorage.app"
+        };
+
+        if (typeof __firebase_config !== 'undefined') {
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch(e){}
+        }
+
+        let app, db, auth;
+        let isCloudActive = false;
+
+        // Tentar inicializar Firebase
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            isCloudActive = true;
+            updateCloudStatusUI(true, "Nuvem Conectada");
+        } catch (e) {
+            console.warn("Modo Local Ativo (Firebase Fallback):", e);
+            updateCloudStatusUI(false, "Modo Local");
+        }
+
+        function updateCloudStatusUI(active, text) {
+            const badge = document.getElementById('cloudStatusBadge');
+            const dot = document.getElementById('cloudStatusDot');
+            const txt = document.getElementById('cloudStatusText');
+
+            if (txt) txt.innerText = text;
+            if (active) {
+                badge.className = "flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200";
+                dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+            } else {
+                badge.className = "flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200";
+                dot.className = "w-2 h-2 rounded-full bg-amber-500";
+            }
+        }
+
+        // PRODUTOS PADRÃO
         const DEFAULT_PRODUCTS = [
-            { id: 'b1', name: 'Coca-Cola Zero 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Gelada' },
-            { id: 'b2', name: 'Coca-Cola Original 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Mais Vendida' },
-            { id: 'b3', name: 'Sprite Zero 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'b4', name: 'Sprite Normal 350ml', category: 'Bebidas', price: 7.00, desc: 'Lata gelada 350ml', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'b5', name: 'H2OH! / Limoneto 500ml', category: 'Bebidas', price: 8.50, desc: 'Garrafa 500ml levemente gaseificada', icon: 'fa-bottle-water', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'b6', name: 'Água Mineral sem Gás 500ml', category: 'Bebidas', price: 4.00, desc: 'Garrafa 500ml leve e pura', icon: 'fa-glass-water', image: 'https://images.unsplash.com/photo-1560023907-5f339617ea30?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'b7', name: 'Água Mineral com Gás 500ml', category: 'Bebidas', price: 4.50, desc: 'Garrafa 500ml bem gelada', icon: 'fa-glass-water', image: 'https://images.unsplash.com/photo-1559839914-17aae19cec71?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'b8', name: 'Água Saborizada', category: 'Bebidas', price: 6.00, desc: 'Garrafa 500ml refrescante', icon: 'fa-wine-bottle', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'v1', name: 'Espumante Brut / Moscatel', category: 'Vinhos & Espumantes', price: 65.00, desc: 'Garrafa ideal para celebração em casal', icon: 'fa-wine-glass', image: 'https://images.unsplash.com/photo-1594498653385-d5172c532c00?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Especial Casal' },
-            { id: 'v2', name: 'Frisante Italiano Intermediário', category: 'Vinhos & Espumantes', price: 55.00, desc: 'Suave, levemente efervescente e saboroso', icon: 'fa-wine-bottle', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80', active: true, tag: 'Recomendado' },
-            { id: 'v3', name: 'Vinho Fino Selecionado', category: 'Vinhos & Espumantes', price: 60.00, desc: 'Vinho tinto seco 750ml', icon: 'fa-wine-glass-empty', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 's1', name: 'Chocolate Fino / Barra', category: 'Snacks & Doces', price: 8.00, desc: 'Barra ou bombom premium selecionado', icon: 'fa-cookie-bite', image: 'https://images.unsplash.com/photo-1511381939415-e44015466834?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 's2', name: 'Batata Pringles / Chips', category: 'Snacks & Doces', price: 12.00, desc: 'Pote crocante e saboroso', icon: 'fa-box', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'h1', name: 'Escova de Dentes Macia', category: 'Higiene Pessoal', price: 9.00, desc: 'Embalagem individual higienizada', icon: 'fa-tooth', image: 'https://images.unsplash.com/photo-1522849676594-ba09117cf494?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'h2', name: 'Creme Dental 90g', category: 'Higiene Pessoal', price: 6.00, desc: 'Proteção total 90g', icon: 'fa-pump-soap', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'h3', name: 'Fio Dental 50m', category: 'Higiene Pessoal', price: 10.00, desc: 'Menta fresca 50 metros', icon: 'fa-teeth', image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=300&auto=format&fit=crop&q=80', active: true },
-            { id: 'h4', name: 'Prestobarba / Barbear', category: 'Higiene Pessoal', price: 6.00, desc: 'Lâmina dupla de alta precisão', icon: 'fa-scissors', image: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=300&auto=format&fit=crop&q=80', active: true }
+            { id: 'b1', name: 'Coca-Cola Lata 350ml', price: 7.00, category: 'Bebidas', desc: 'Gelada', tag: 'Mais Vendido', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'b2', name: 'Coca-Cola Zero Lata 350ml', price: 7.00, category: 'Bebidas', desc: 'Gelada sem açúcar', tag: 'Zero', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'b3', name: 'Sprite Lata 350ml', price: 7.00, category: 'Bebidas', desc: 'Sabor Limão', tag: 'Gelada', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'b4', name: 'H2OH! Limoneto 500ml', price: 8.50, category: 'Bebidas', desc: 'Levemente gaseificada', tag: 'Refrescante', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=300&auto=format&fit=crop&q=80' },
+            { id: 'v1', name: 'Vinho Espumante Champanhe', price: 65.00, category: 'Vinhos', desc: 'Ideal para casais', tag: 'Especial Casal', image: 'https://images.unsplash.com/photo-1569919659476-f0852f6834b7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'v2', name: 'Vinho Italiano Frisante', price: 55.00, category: 'Vinhos', desc: 'Importado leve e suave', tag: 'Italiano', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
+            { id: 's1', name: 'Chocolate Barra Nobre', price: 9.00, category: 'Snacks', desc: 'Ao leite / Meio amargo', tag: 'Doce', image: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=300&auto=format&fit=crop&q=80' },
+            { id: 'h1', name: 'Escova de Dentes Macia', price: 10.00, category: 'Higiene', desc: 'Embalagem individual', tag: 'Higiene', image: 'https://images.unsplash.com/photo-1522849676594-ba09117cf494?w=300&auto=format&fit=crop&q=80' },
+            { id: 'h2', name: 'Creme Dental / Pasta', price: 8.00, category: 'Higiene', desc: 'Proteção total 90g', tag: 'Higiene', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80' },
+            { id: 'h3', name: 'Aparelho de Barbear / Depilar', price: 7.00, category: 'Higiene', desc: 'Prestobarba individual', tag: 'Higiene', image: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=300&auto=format&fit=crop&q=80' }
         ];
 
         let products = [];
-        let cart = {};
-        let currentCategory = 'Todos';
-        let shopConfig = {
-            storeName: 'Conveniência do Flat',
-            phone: '5563999999999',
-            pixKey: '03137189110',
-            adminPass: '@FlatFood2026@'
+        let cart = [];
+        let currentCategory = 'Todas';
+        let storeSettings = {
+            whatsapp: '5531999999999',
+            pix: '03137189110'
         };
-        let isAdminLoggedIn = false;
-        let activeAdminTab = 'products';
 
-        // Firebase References
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'flatfood-mini-mercado';
-        let db = null;
-        let auth = null;
-        let isCloudActive = false;
-        window.cloudErrorMessage = "";
+        window.onload = function() {
+            handleRouting();
+            window.addEventListener('hashchange', handleRouting);
+            loadLocalStorageData();
 
-        function updateCloudBadge(active, text) {
-            const cloudBadge = document.getElementById('cloudStatusBadge');
-            if (cloudBadge) {
-                if (active) {
-                    cloudBadge.className = "text-[9px] bg-emerald-700/80 text-emerald-100 px-1.5 py-0.5 rounded flex items-center gap-1";
-                    cloudBadge.innerHTML = `<i class="fa-solid fa-cloud-check text-[9px]"></i> ${text}`;
-                } else {
-                    cloudBadge.className = "text-[9px] bg-amber-700/80 text-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1";
-                    cloudBadge.innerHTML = `<i class="fa-solid fa-cloud-slash text-[9px]"></i> ${text}`;
-                }
-            }
-
-            const alertBox = document.getElementById('firebaseCloudAlert');
-            const alertMsg = document.getElementById('firebaseCloudAlertMsg');
-            if (alertBox && alertMsg && window.cloudErrorMessage) {
-                alertMsg.innerText = window.cloudErrorMessage;
-                alertBox.classList.remove('hidden');
-            }
-        }
-
-        async function initFirebase() {
-            try {
-                let firebaseConfig = null;
-
-                if (typeof __firebase_config !== 'undefined') {
-                    firebaseConfig = JSON.parse(__firebase_config);
-                } else {
-                    try {
-                        const response = await fetch('/__/firebase/init.json');
-                        if (response.ok) {
-                            firebaseConfig = await response.json();
-                        }
-                    } catch (e) {
-                        console.log("Auto-config do Hosting não detectado.");
-                    }
-                }
-
-                if (!firebaseConfig) {
-                    firebaseConfig = {
-                        apiKey: "AIzaSyDvEQfDJmGid_iCgiQM9XThYVe5LigVG5A",
-                        authDomain: "flatfood-d4296.firebaseapp.com",
-                        projectId: "flatfood-d4296",
-                        storageBucket: "flatfood-d4296.firebasestorage.app",
-                        messagingSenderId: "695926629715",
-                        appId: "1:695926629715:web:42b50ff920566121b8eda6",
-                        measurementId: "G-P4GX2HG9YC"
-                    };
-                }
-
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
+            if (isCloudActive && db) {
                 try {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (authErr) {
-                    console.error("Erro na autenticação Firebase:", authErr);
-                    window.cloudErrorMessage = "Login Anônimo desativado no Firebase. Acesse Firebase Console -> Authentication -> Sign-in method e ative 'Anônimo'.";
-                    updateCloudBadge(false, "Auth Desativada");
-                    return false;
-                }
-
-                if (auth.currentUser) {
-                    isCloudActive = true;
-                    setupRealtimeSync();
-                    updateCloudBadge(true, "Nuvem Ativa");
-                    return true;
-                }
-            } catch (err) {
-                console.warn("Usando localStorage como fallback offline:", err);
-                updateCloudBadge(false, "Modo Local");
-            }
-            return false;
-        }
-
-        function setupRealtimeSync() {
-            if (!db || !auth.currentUser) return;
-
-            const prodsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-            const configDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings');
-
-            onSnapshot(prodsColRef, (snapshot) => {
-                if (snapshot.empty) {
-                    DEFAULT_PRODUCTS.forEach(async (p) => {
-                        try {
-                            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', p.id), p);
-                        } catch(e){}
+                    const prodRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+                    onSnapshot(prodRef, (snapshot) => {
+                        if (!snapshot.empty) {
+                            const cloudItems = [];
+                            snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
+                            products = cloudItems;
+                            renderProducts();
+                            renderAdminProductList();
+                            updateCloudStatusUI(true, "Nuvem Sincronizada");
+                        }
+                    }, (err) => {
+                        console.warn("Erro no listener da nuvem:", err);
+                        updateCloudStatusUI(false, "Sincronização Falhou");
                     });
-                } else {
-                    const cloudProds = [];
-                    snapshot.forEach(docSnap => cloudProds.push(docSnap.data()));
-                    products = cloudProds;
-                    renderProducts();
-                    if (isAdminLoggedIn) renderAdminProductList();
+                } catch(e) {
+                    console.warn("Snapshot não ativado:", e);
                 }
-            }, (err) => {
-                console.error("Snapshot error:", err);
-                isCloudActive = false;
-                window.cloudErrorMessage = "Regras do Firestore bloqueando acesso. Acesse Firebase Console -> Firestore Database -> Regras e insira 'allow read, write: if true;'.";
-                updateCloudBadge(false, "Sem Permissão");
-            });
+            }
+        };
 
-            onSnapshot(configDocRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    shopConfig = { ...shopConfig, ...docSnap.data() };
-                    syncUIElementsWithConfig();
-                } else {
-                    setDoc(configDocRef, shopConfig).catch(e => console.error("Config err:", e));
-                }
-            }, (err) => console.error("Config snapshot error:", err));
-        }
+        function handleRouting() {
+            const hash = window.location.hash.replace('#', '') || 'landing';
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
 
-        function syncUIElementsWithConfig() {
-            const storeElem = document.getElementById('storeNameDisplay');
-            if (storeElem) storeElem.innerText = shopConfig.storeName;
-
-            const nameInp = document.getElementById('adminStoreNameInput');
-            if (nameInp) nameInp.value = shopConfig.storeName;
-
-            const phoneInp = document.getElementById('adminPhoneInput');
-            if (phoneInp) phoneInp.value = shopConfig.phone;
-
-            const pixInp = document.getElementById('adminPixInput');
-            if (pixInp) pixInp.value = shopConfig.pixKey;
-
-            const passInp = document.getElementById('adminPassConfigInput');
-            if (passInp) passInp.value = shopConfig.adminPass;
-
-            const pixDisp = document.getElementById('pixKeyDisplay');
-            if (pixDisp) pixDisp.value = shopConfig.pixKey;
-
-            const qrPixDisp = document.getElementById('qrModalPixDisplay');
-            if (qrPixDisp) qrPixDisp.innerText = shopConfig.pixKey;
-
-            const plaquePix = document.getElementById('adminPlaquePixDisplay');
-            if (plaquePix) plaquePix.innerText = shopConfig.pixKey;
+            if (hash === 'admin') {
+                document.getElementById('viewAdmin').classList.remove('hidden');
+            } else if (hash === 'shop') {
+                document.getElementById('viewShop').classList.remove('hidden');
+                renderProducts();
+            } else {
+                document.getElementById('viewLanding').classList.remove('hidden');
+            }
         }
 
         function loadLocalStorageData() {
-            const savedProducts = localStorage.getItem('flat_shop_products');
-            if (savedProducts) {
-                try { products = JSON.parse(savedProducts); } catch(e) { products = DEFAULT_PRODUCTS; }
+            const localProd = localStorage.getItem('flatfood_products');
+            if (localProd) {
+                products = JSON.parse(localProd);
             } else {
-                products = DEFAULT_PRODUCTS;
+                products = [...DEFAULT_PRODUCTS];
             }
-
-            const savedConfig = localStorage.getItem('flat_shop_config');
-            if (savedConfig) {
-                try { shopConfig = JSON.parse(savedConfig); } catch(e){}
-            }
-            syncUIElementsWithConfig();
+            renderProducts();
         }
 
         function saveDataLocal() {
-            localStorage.setItem('flat_shop_products', JSON.stringify(products));
-            localStorage.setItem('flat_shop_config', JSON.stringify(shopConfig));
+            localStorage.setItem('flatfood_products', JSON.stringify(products));
         }
 
-        window.getShopUrl = function() {
-            let baseUrl = window.location.origin + window.location.pathname;
-            if (!baseUrl || baseUrl.includes('null') || baseUrl.startsWith('about:')) {
-                baseUrl = window.location.href.split('#')[0].split('?')[0];
-            }
-            return baseUrl + '#shop';
-        };
-
-        window.handleHashRouting = function() {
-            const hash = window.location.hash.toLowerCase();
-            document.getElementById('landingView').classList.add('hidden');
-            document.getElementById('shopView').classList.add('hidden');
-            document.getElementById('adminView').classList.add('hidden');
-
-            if (hash.includes('admin')) {
-                document.getElementById('adminView').classList.remove('hidden');
-                if (isAdminLoggedIn) showAdminDashboard();
-                else showAdminLogin();
-            } else if (hash.includes('shop') || window.location.search.includes('shop')) {
-                document.getElementById('shopView').classList.remove('hidden');
-            } else {
-                document.getElementById('landingView').classList.remove('hidden');
-            }
-        };
-
-        window.switchRoute = function(route) {
-            if (route === 'admin') window.location.hash = '#admin';
-            else if (route === 'shop') window.location.hash = '#shop';
-            else window.location.hash = '#landing';
-        };
-
-        window.accessShopFromLanding = function() {
-            const val = document.getElementById('landingInputEmail').value.trim();
-            if (val) {
-                if (val.toLowerCase().includes('flat') || val.toLowerCase().includes('quarto') || !isNaN(val)) {
-                    document.getElementById('roomNumber').value = val;
-                } else {
-                    document.getElementById('customerName').value = val;
-                }
-            }
-            window.switchRoute('shop');
-        };
-
-        const CATEGORIES = [
-            { name: 'Todos', icon: 'fa-border-all' },
-            { name: 'Bebidas', icon: 'fa-bottle-water' },
-            { name: 'Vinhos & Espumantes', icon: 'fa-wine-bottle' },
-            { name: 'Snacks & Doces', icon: 'fa-cookie-bite' },
-            { name: 'Higiene Pessoal', icon: 'fa-pump-soap' }
-        ];
-
-        window.renderCategories = function() {
-            const container = document.getElementById('categoryTabs');
-            if (!container) return;
-            container.innerHTML = CATEGORIES.map(cat => {
-                const isActive = cat.name === currentCategory;
-                return `
-                    <button onclick="selectCategory('${cat.name}')" 
-                        class="px-3.5 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                            isActive 
-                            ? 'bg-ifood-500 text-white shadow-md scale-105' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }">
-                        <i class="fa-solid ${cat.icon} ${isActive ? 'text-white' : 'text-ifood-500'}"></i>
-                        <span>${cat.name}</span>
-                    </button>
-                `;
-            }).join('');
-        };
-
-        window.selectCategory = function(catName) {
-            currentCategory = catName;
-            window.renderCategories();
-            window.renderProducts();
-        };
-
-        window.clearSearch = function() {
-            const input = document.getElementById('searchInput');
-            if (input) input.value = '';
-            const clearBtn = document.getElementById('clearSearchBtn');
-            if (clearBtn) clearBtn.classList.add('hidden');
-            window.renderProducts();
-        };
-
         window.renderProducts = function() {
-            const container = document.getElementById('productsContainer');
-            if (!container) return;
-            const searchInput = document.getElementById('searchInput');
-            const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-            const clearBtn = document.getElementById('clearSearchBtn');
-
-            if (clearBtn) {
-                if (searchQuery.length > 0) clearBtn.classList.remove('hidden');
-                else clearBtn.classList.add('hidden');
-            }
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
 
             const filtered = products.filter(p => {
-                if (!p.active) return false;
-                const matchesCat = (currentCategory === 'Todos' || p.category === currentCategory);
-                const matchesSearch = p.name.toLowerCase().includes(searchQuery) || p.desc.toLowerCase().includes(searchQuery);
-                return matchesCat && matchesSearch;
+                const matchCat = currentCategory === 'Todas' || p.category === currentCategory;
+                const searchVal = (document.getElementById('searchInput')?.value || '').toLowerCase();
+                const matchSearch = p.name.toLowerCase().includes(searchVal) || (p.desc && p.desc.toLowerCase().includes(searchVal));
+                return matchCat && matchSearch;
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-                        <i class="fa-solid fa-magnifying-glass text-4xl mb-3 text-gray-300"></i>
-                        <p class="text-sm font-bold text-gray-700">Nenhum item encontrado</p>
-                        <p class="text-xs text-gray-400 mt-1">Tente buscar por outro termo ou categoria.</p>
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 space-y-3">
+                        <i class="fa-solid fa-box-open text-4xl text-gray-300"></i>
+                        <p class="text-sm font-bold text-gray-500">Nenhum produto encontrado nesta categoria.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = filtered.map(p => {
-                const qty = cart[p.id] || 0;
-                return `
-                    <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition group">
-                        <div class="flex items-center space-x-3.5 flex-1 pr-2">
-                            <div class="w-20 h-20 rounded-2xl bg-gray-100 overflow-hidden flex-shrink-0 relative border border-gray-100">
-                                <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/100x100/ea1d2c/white?text=Flat'">
-                                ${p.tag ? `<span class="absolute top-1 left-1 bg-ifood-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded-md shadow uppercase tracking-wider">${p.tag}</span>` : ''}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-extrabold text-gray-900 text-xs leading-snug truncate">${p.name}</h3>
-                                <p class="text-[11px] text-gray-400 mt-0.5 line-clamp-1 font-medium">${p.desc}</p>
-                                <div class="text-ifood-500 font-black text-sm mt-1.5">
-                                    R$ ${p.price.toFixed(2).replace('.', ',')}
-                                </div>
-                            </div>
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-3xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition space-y-3 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="relative h-40 rounded-2xl overflow-hidden bg-gray-100">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x200/eee/333?text=FlatFood'">
+                            ${p.tag ? `<span class="absolute top-2 left-2 bg-ifood-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow">${p.tag}</span>` : ''}
                         </div>
-
-                        <div class="flex-shrink-0">
-                            ${qty === 0 ? `
-                                <button onclick="addToCart('${p.id}')" class="bg-red-50 hover:bg-ifood-500 hover:text-white text-ifood-500 border border-red-200 font-extrabold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1 transition shadow-sm active:scale-95">
-                                    <i class="fa-solid fa-plus text-[10px]"></i> Adicionar
-                                </button>
-                            ` : `
-                                <div class="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200 space-x-2 shadow-inner">
-                                    <button onclick="removeFromCart('${p.id}')" class="w-7 h-7 rounded-lg bg-white text-gray-800 flex items-center justify-center shadow-sm hover:bg-gray-200 active:scale-95 text-xs font-bold">
-                                        <i class="fa-solid fa-minus"></i>
-                                    </button>
-                                    <span class="text-xs font-black text-gray-900 w-4 text-center">${qty}</span>
-                                    <button onclick="addToCart('${p.id}')" class="w-7 h-7 rounded-lg bg-ifood-500 text-white flex items-center justify-center shadow-sm hover:bg-ifood-600 active:scale-95 text-xs font-bold">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                </div>
-                            `}
+                        <div>
+                            <h3 class="font-bold text-base leading-snug">${p.name}</h3>
+                            <p class="text-xs text-gray-400 mt-1">${p.desc || ''}</p>
                         </div>
                     </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-50">
+                        <span class="text-lg font-black text-ifood-darkText">R$ ${Number(p.price).toFixed(2).replace('.', ',')}</span>
+                        <button onclick="addToCart('${p.id}')" class="bg-ifood-red hover:bg-ifood-darkRed text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Adicionar</span>
+                        </button>
+                    </div>
                 `;
-            }).join('');
+                grid.appendChild(card);
+            });
         };
 
-        window.addToCart = function(id) {
-            cart[id] = (cart[id] || 0) + 1;
-            window.updateCartUI();
-            window.renderProducts();
-            window.showToast('Item adicionado à sacola');
-        };
-
-        window.removeFromCart = function(id) {
-            if (cart[id]) {
-                cart[id]--;
-                if (cart[id] <= 0) delete cart[id];
+        window.filterCategory = function(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-ifood-red', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.remove('bg-white', 'text-gray-700');
+                event.currentTarget.classList.add('bg-ifood-red', 'text-white');
             }
-            window.updateCartUI();
-            window.renderProducts();
+            renderProducts();
         };
 
-        window.updateCartUI = function() {
-            let totalItems = 0;
-            let totalPrice = 0;
+        window.searchProducts = function() {
+            renderProducts();
+        };
 
-            Object.keys(cart).forEach(id => {
-                const p = products.find(prod => prod.id === id);
-                if (p) {
-                    totalItems += cart[id];
-                    totalPrice += p.price * cart[id];
-                }
+        window.addToCart = function(prodId) {
+            const prod = products.find(p => p.id === prodId);
+            if (!prod) return;
+
+            const existing = cart.find(item => item.id === prodId);
+            if (existing) {
+                existing.qty++;
+            } else {
+                cart.push({ ...prod, qty: 1 });
+            }
+            updateCartUI();
+            showToast(`"${prod.name}" adicionado ao carrinho!`);
+        };
+
+        function updateCartUI() {
+            const countEl = document.getElementById('headerCartCount');
+            const totalQty = cart.reduce((acc, item) => acc + item.qty, 0);
+            if (countEl) countEl.innerText = totalQty;
+
+            const itemsList = document.getElementById('cartItemsList');
+            if (!itemsList) return;
+            itemsList.innerHTML = '';
+
+            let total = 0;
+
+            cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 text-sm";
+                row.innerHTML = `
+                    <div class="space-y-0.5">
+                        <h4 class="font-bold text-gray-800">${item.name}</h4>
+                        <span class="text-xs text-gray-500">R$ ${item.price.toFixed(2)} cada</span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold flex items-center justify-center hover:bg-gray-100">-</button>
+                        <span class="font-black text-xs px-1">${item.qty}</span>
+                        <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold flex items-center justify-center hover:bg-gray-100">+</button>
+                    </div>
+                `;
+                itemsList.appendChild(row);
             });
 
-            const cartBar = document.getElementById('cartBar');
-            const countBadge = document.getElementById('cartCountBadge');
-            const headerBadge = document.getElementById('headerCartBadge');
-            const totalHeader = document.getElementById('cartTotalHeader');
-            const drawerTotal = document.getElementById('cartDrawerTotal');
+            document.getElementById('cartSubtotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            document.getElementById('cartTotal').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
 
-            if (countBadge) countBadge.innerText = totalItems;
-            if (headerBadge) headerBadge.innerText = totalItems;
-            if (totalHeader) totalHeader.innerText = `R$ ${totalPrice.toFixed(2).replace('.', ',')}`;
-            if (drawerTotal) drawerTotal.innerText = `R$ ${totalPrice.toFixed(2).replace('.', ',')}`;
-
-            if (cartBar) {
-                if (totalItems > 0) cartBar.classList.remove('translate-y-full');
-                else cartBar.classList.add('translate-y-full');
+        window.changeQty = function(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
             }
-
-            window.renderCartDrawerItems();
+            updateCartUI();
         };
 
-        window.renderCartDrawerItems = function() {
-            const container = document.getElementById('cartItemsContainer');
-            if (!container) return;
-            const cartKeys = Object.keys(cart);
-
-            if (cartKeys.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 text-gray-400 space-y-2">
-                        <i class="fa-solid fa-basket-shopping text-4xl text-gray-200"></i>
-                        <p class="text-xs font-bold text-gray-500">Sua sacola está vazia.</p>
-                        <p class="text-[11px] text-gray-400">Escolha os itens do seu flat para começar.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = cartKeys.map(id => {
-                const p = products.find(prod => prod.id === id);
-                if (!p) return '';
-                const qty = cart[id];
-                const itemTotal = p.price * qty;
-
-                return `
-                    <div class="py-3 flex items-center justify-between">
-                        <div class="flex-1 pr-2">
-                            <h4 class="font-extrabold text-gray-900 text-xs">${p.name}</h4>
-                            <div class="text-[11px] text-gray-400 font-medium">R$ ${p.price.toFixed(2).replace('.', ',')} un.</div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center bg-gray-100 rounded-xl p-0.5 border">
-                                <button onclick="removeFromCart('${p.id}')" class="w-6 h-6 rounded-lg bg-white text-gray-800 flex items-center justify-center text-xs font-bold shadow-sm">
-                                    <i class="fa-solid fa-minus"></i>
-                                </button>
-                                <span class="text-xs font-black px-2 text-gray-900">${qty}</span>
-                                <button onclick="addToCart('${p.id}')" class="w-6 h-6 rounded-lg bg-ifood-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                                    <i class="fa-solid fa-plus"></i>
-                                </button>
-                            </div>
-                            <span class="font-black text-xs text-gray-900 w-16 text-right">R$ ${itemTotal.toFixed(2).replace('.', ',')}</span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+        window.openCartModal = function() {
+            updateCartUI();
+            document.getElementById('cartModal').classList.remove('hidden');
         };
 
-        window.openCartDrawer = function() {
-            const pixImg = document.getElementById('pixQrImage');
-            if (pixImg) {
-                const pixQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(shopConfig.pixKey)}`;
-                pixImg.src = pixQrUrl;
-            }
-            const drawer = document.getElementById('cartDrawer');
-            if (drawer) drawer.classList.remove('hidden');
-        };
-
-        window.closeCartDrawer = function() {
-            const drawer = document.getElementById('cartDrawer');
-            if (drawer) drawer.classList.add('hidden');
-        };
-
-        window.openInfoModal = function() {
-            const modal = document.getElementById('infoModal');
-            if (modal) modal.classList.remove('hidden');
-        };
-
-        window.closeInfoModal = function() {
-            const modal = document.getElementById('infoModal');
-            if (modal) modal.classList.add('hidden');
-        };
-
-        window.openQrModal = function() {
-            const currentUrl = window.getShopUrl();
-            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}`;
-            const menuImg = document.getElementById('menuQrImage');
-            if (menuImg) menuImg.src = qrApiUrl;
-            const qrPix = document.getElementById('qrModalPixDisplay');
-            if (qrPix) qrPix.innerText = shopConfig.pixKey;
-            const modal = document.getElementById('qrModal');
-            if (modal) modal.classList.remove('hidden');
-        };
-
-        window.closeQrModal = function() {
-            const modal = document.getElementById('qrModal');
-            if (modal) modal.classList.add('hidden');
-        };
-
-        window.copyPixKey = function() {
-            const key = document.getElementById('pixKeyDisplay').value;
-            const tempInput = document.createElement('input');
-            tempInput.value = key;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-
-            window.showToast('Chave PIX copiada com sucesso!');
+        window.closeCartModal = function() {
+            document.getElementById('cartModal').classList.add('hidden');
         };
 
         window.submitOrderToWhatsApp = function() {
-            const nameInp = document.getElementById('customerName');
-            const roomInp = document.getElementById('roomNumber');
-            const name = nameInp ? nameInp.value.trim() : '';
-            const room = roomInp ? roomInp.value.trim() : '';
-
-            if (!name) {
-                window.showToast('Por favor, informe seu Nome!', 'error');
-                if (nameInp) nameInp.focus();
+            const guestInfo = document.getElementById('guestInfoInput').value.trim();
+            if (!guestInfo) {
+                showToast('Informe seu nome e número do flat!', 'error');
+                return;
+            }
+            if (cart.length === 0) {
+                showToast('Seu carrinho está vazio!', 'error');
                 return;
             }
 
-            if (!room) {
-                window.showToast('Por favor, informe o Nº do Flat/Quarto!', 'error');
-                if (roomInp) roomInp.focus();
-                return;
-            }
+            let msg = `🛒 *NOVO CONSUMO - FLATFOOD*\n`;
+            msg += `📍 *Hóspede/Flat:* ${guestInfo}\n\n`;
+            msg += `*Itens Consumidos:*\n`;
 
-            if (Object.keys(cart).length === 0) {
-                window.showToast('Sua sacola está vazia!', 'error');
-                return;
-            }
-
-            let orderText = `🛒 *CONSUMO MINI MERCADO - AUTOATENDIMENTO*\n`;
-            orderText += `------------------------------------\n`;
-            orderText += `👤 *Hóspede:* ${name}\n`;
-            orderText += `🚪 *Local:* ${room}\n`;
-            orderText += `💳 *Pagamento:* PIX Realizado\n`;
-            orderText += `📌 *Chave PIX:* ${shopConfig.pixKey}\n`;
-            orderText += `------------------------------------\n\n`;
-            orderText += `📦 *ITENS RETIRADOS DO FLAT:*\n`;
-
-            let totalPrice = 0;
-            Object.keys(cart).forEach(id => {
-                const p = products.find(prod => prod.id === id);
-                if (p) {
-                    const qty = cart[id];
-                    const itemTotal = p.price * qty;
-                    totalPrice += itemTotal;
-                    orderText += `• ${qty}x ${p.name} (R$ ${itemTotal.toFixed(2).replace('.', ',')})\n`;
-                }
+            let total = 0;
+            cart.forEach(i => {
+                const sub = i.price * i.qty;
+                total += sub;
+                msg += `• ${i.qty}x ${i.name} - R$ ${sub.toFixed(2)}\n`;
             });
 
-            orderText += `\n💰 *VALOR TOTAL PAGO:* R$ ${totalPrice.toFixed(2).replace('.', ',')}\n`;
-            orderText += `\n_Segue em anexo o comprovante de pagamento do PIX._`;
+            msg += `\n💰 *Total:* R$ ${total.toFixed(2).replace('.', ',')}\n`;
+            msg += `💳 *Pagamento:* PIX (Chave: ${storeSettings.pix})\n`;
+            msg += `_Consumo de autoatendimento direto na acomodação._`;
 
-            const encodedText = encodeURIComponent(orderText);
-            const phone = shopConfig.phone || '5563999999999';
-            window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank');
+            const phone = storeSettings.whatsapp.replace(/\D/g, '') || '5531999999999';
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+
+            cart = [];
+            updateCartUI();
+            closeCartModal();
+            showToast('Pedido gerado! Enviando no WhatsApp...');
         };
 
-        window.verificarSenhaHex = function(input) {
-            const codigos = [
-                0x40, 0x46, 0x6C, 0x61, 0x74, 0x46, 0x6F, 0x6F, 0x64, 0x32, 0x30, 0x32, 0x36, 0x40
-            ];
-            const senhaEscondida = String.fromCharCode(...codigos);
-            return input === senhaEscondida;
+        window.copyPixKey = function() {
+            const pix = storeSettings.pix;
+            const el = document.createElement('textarea');
+            el.value = pix;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast('Chave PIX copiada com sucesso!');
         };
 
-        window.authenticateAdmin = function() {
-            const passInp = document.getElementById('adminPasswordInput');
-            const input = passInp ? passInp.value : '';
+        window.verificarSenhaHex = function() {
+            const codigos = [0x40, 0x46, 0x6C, 0x61, 0x74, 0x46, 0x6F, 0x6F, 0x64, 0x32, 0x30, 0x32, 0x36, 0x40];
+            const senhaSecreta = String.fromCharCode(...codigos);
+            const input = document.getElementById('adminPasswordInput').value;
 
-            if (window.verificarSenhaHex(input) || input === shopConfig.adminPass) {
-                isAdminLoggedIn = true;
-                showAdminDashboard();
-                window.showToast('Senha Correta! Acesso concedido.');
+            if (input === senhaSecreta) {
+                document.getElementById('adminAuthBox').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                renderAdminProductList();
+                showToast('Acesso concedido!');
             } else {
-                window.showToast('Erro! Senha incorreta.', 'error');
+                showToast('Senha incorreta!', 'error');
             }
         };
 
-        function showAdminLogin() {
-            const authCnt = document.getElementById('adminAuthContainer');
-            if (authCnt) authCnt.classList.remove('hidden');
-            const dashCnt = document.getElementById('adminDashboardContainer');
-            if (dashCnt) dashCnt.classList.add('hidden');
-            const passInp = document.getElementById('adminPasswordInput');
-            if (passInp) passInp.value = '';
-        }
-
-        function showAdminDashboard() {
-            const authCnt = document.getElementById('adminAuthContainer');
-            if (authCnt) authCnt.classList.add('hidden');
-            const dashCnt = document.getElementById('adminDashboardContainer');
-            if (dashCnt) dashCnt.classList.remove('hidden');
-            window.renderAdminProductList();
-            window.updatePlaqueQrCode();
-        }
-
         window.logoutAdmin = function() {
-            isAdminLoggedIn = false;
-            showAdminLogin();
-            window.showToast('Você saiu da administração.');
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('adminAuthBox').classList.remove('hidden');
+            document.getElementById('adminPasswordInput').value = '';
         };
 
         window.switchAdminTab = function(tab) {
-            activeAdminTab = tab;
-            document.getElementById('adminTabProducts').classList.add('hidden');
-            document.getElementById('adminTabConfig').classList.add('hidden');
-            document.getElementById('adminTabPlaque').classList.add('hidden');
-
-            document.getElementById('adminTabProdsBtn').className = "flex-1 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition";
-            document.getElementById('adminTabConfigBtn').className = "flex-1 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition";
-            document.getElementById('adminTabPlaqueBtn').className = "flex-1 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition";
-
             if (tab === 'products') {
-                document.getElementById('adminTabProducts').classList.remove('hidden');
-                document.getElementById('adminTabProdsBtn').className = "flex-1 py-2 rounded-xl text-xs font-bold bg-ifood-500 text-white shadow";
-            } else if (tab === 'config') {
-                document.getElementById('adminTabConfig').classList.remove('hidden');
-                document.getElementById('adminTabConfigBtn').className = "flex-1 py-2 rounded-xl text-xs font-bold bg-ifood-500 text-white shadow";
-            } else if (tab === 'plaque') {
-                document.getElementById('adminTabPlaque').classList.remove('hidden');
-                document.getElementById('adminTabPlaqueBtn').className = "flex-1 py-2 rounded-xl text-xs font-bold bg-ifood-500 text-white shadow";
-                window.updatePlaqueQrCode();
+                document.getElementById('tabContentProducts').classList.remove('hidden');
+                document.getElementById('tabContentSettings').classList.add('hidden');
+                document.getElementById('tabBtnProducts').className = "font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2";
+                document.getElementById('tabBtnSettings').className = "font-bold text-sm text-gray-500 hover:text-gray-700 pb-2";
+            } else {
+                document.getElementById('tabContentProducts').classList.add('hidden');
+                document.getElementById('tabContentSettings').classList.remove('hidden');
+                document.getElementById('tabBtnSettings').className = "font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2";
+                document.getElementById('tabBtnProducts').className = "font-bold text-sm text-gray-500 hover:text-gray-700 pb-2";
             }
         };
 
         window.renderAdminProductList = function() {
-            const container = document.getElementById('adminProductList');
-            if (!container) return;
-            const countElem = document.getElementById('adminProdCount');
-            if (countElem) countElem.innerText = products.length;
+            const table = document.getElementById('adminProductTable');
+            if (!table) return;
+            table.innerHTML = '';
 
-            container.innerHTML = products.map((p, idx) => `
-                <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between text-xs gap-2">
-                    <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                        <input type="checkbox" ${p.active ? 'checked' : ''} onchange="toggleProductActive(${idx})" title="Visível no Cardápio" class="w-4 h-4 text-ifood-500 rounded focus:ring-0">
-                        <div class="w-10 h-10 rounded-xl bg-gray-100 flex-shrink-0 overflow-hidden">
-                            <img src="${p.image}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="truncate">
-                            <h5 class="font-extrabold text-gray-900 truncate">${p.name}</h5>
-                            <span class="text-[10px] text-gray-400 font-medium">${p.category}</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <div class="flex items-center border rounded-xl bg-gray-50 px-2 py-1">
-                            <span class="text-gray-400 mr-1 text-[11px]">R$</span>
-                            <input type="number" step="0.50" value="${p.price}" onchange="updateProductPrice(${idx}, this.value)" class="w-14 bg-transparent font-extrabold text-gray-900 text-center focus:outline-none">
-                        </div>
-                        <button onclick="editProductAdmin(${idx})" class="p-2 text-gray-600 hover:text-ifood-500 bg-gray-100 rounded-xl hover:bg-red-50">
-                            <i class="fa-solid fa-pen-to-square"></i>
+            products.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-bold flex items-center space-x-2">
+                        <img src="${p.image}" class="w-8 h-8 rounded-lg object-cover">
+                        <span>${p.name}</span>
+                    </td>
+                    <td class="p-3 text-gray-500">${p.category}</td>
+                    <td class="p-3 font-black text-ifood-red">R$ ${Number(p.price).toFixed(2)}</td>
+                    <td class="p-3"><span class="text-xs bg-gray-100 px-2 py-0.5 rounded font-bold">${p.tag || '-'}</span></td>
+                    <td class="p-3 text-right space-x-2">
+                        <button onclick="editProductAdmin(${idx})" class="text-blue-600 hover:text-blue-800 font-bold text-xs">
+                            <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button onclick="removeProductAdmin(${idx})" class="p-2 text-red-500 hover:text-red-700 bg-red-50 rounded-xl">
+                        <button onclick="removeProductAdmin(${idx})" class="text-red-600 hover:text-red-800 font-bold text-xs">
                             <i class="fa-solid fa-trash"></i>
                         </button>
-                    </div>
-                </div>
-            `).join('');
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
         };
 
-        window.toggleProductActive = async function(idx) {
-            products[idx].active = !products[idx].active;
-            if (isCloudActive && db) {
-                try {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', products[idx].id), products[idx]);
-                    window.showToast(products[idx].active ? 'Produto ativado na Nuvem!' : 'Produto ocultado na Nuvem!');
-                } catch(e) {
-                    saveDataLocal();
-                    window.showToast('Erro na Nuvem! Salvo localmente.', 'error');
-                }
-            } else {
-                saveDataLocal();
-                window.showToast(products[idx].active ? 'Produto ativado!' : 'Produto ocultado!');
-            }
-            window.renderProducts();
+        window.openProductEditModal = function() {
+            document.getElementById('editProdId').value = '';
+            document.getElementById('editProdName').value = '';
+            document.getElementById('editProdPrice').value = '';
+            document.getElementById('editProdCategory').value = 'Bebidas';
+            document.getElementById('editProdDesc').value = '';
+            document.getElementById('editProdTag').value = '';
+            document.getElementById('editProdImage').value = '';
+            
+            document.getElementById('productModalTitle').innerText = 'Cadastrar Novo Produto';
+            document.getElementById('productEditModal').classList.remove('hidden');
         };
 
-        window.updateProductPrice = async function(idx, val) {
-            products[idx].price = parseFloat(val) || 0;
-            if (isCloudActive && db) {
-                try {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', products[idx].id), products[idx]);
-                    window.showToast('Preço atualizado na Nuvem!');
-                } catch(e) {
-                    saveDataLocal();
-                    window.showToast('Erro na Nuvem! Salvo localmente.', 'error');
-                }
-            } else {
-                saveDataLocal();
-                window.showToast('Preço atualizado!');
-            }
-            window.renderProducts();
+        window.closeProductEditModal = function() {
+            document.getElementById('productEditModal').classList.add('hidden');
         };
 
-        window.removeProductAdmin = async function(idx) {
-            const removed = products.splice(idx, 1);
-            if (removed[0] && isCloudActive && db) {
-                try {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', removed[0].id));
-                    window.showToast(`"${removed[0]?.name}" removido da Nuvem!`);
-                } catch(e) {
-                    saveDataLocal();
-                    window.showToast('Erro na Nuvem! Removido localmente.', 'error');
-                }
-            } else {
-                saveDataLocal();
-                window.showToast(`"${removed[0]?.name}" removido!`);
-            }
-            window.renderAdminProductList();
-            window.renderProducts();
+        window.editProductAdmin = function(idx) {
+            const p = products[idx];
+            if (!p) return;
+
+            document.getElementById('editProdId').value = idx;
+            document.getElementById('editProdName').value = p.name || '';
+            document.getElementById('editProdPrice').value = p.price || 0;
+            document.getElementById('editProdCategory').value = p.category || 'Bebidas';
+            document.getElementById('editProdDesc').value = p.desc || '';
+            document.getElementById('editProdTag').value = p.tag || '';
+            document.getElementById('editProdImage').value = p.image || '';
+
+            document.getElementById('productModalTitle').innerText = 'Editar Produto';
+            document.getElementById('productEditModal').classList.remove('hidden');
         };
 
         window.saveProductFromModal = async function() {
@@ -1465,121 +898,122 @@
             const name = document.getElementById('editProdName').value.trim();
             const price = parseFloat(document.getElementById('editProdPrice').value) || 0;
             const category = document.getElementById('editProdCategory').value;
-            const desc = document.getElementById('editProdDesc').value.trim() || 'Item da conveniência';
+            const desc = document.getElementById('editProdDesc').value.trim();
             const tag = document.getElementById('editProdTag').value.trim();
-            const image = document.getElementById('editProdImage').value.trim() || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&auto=format&fit=crop&q=80';
+            const image = document.getElementById('editProdImage').value.trim() || 'https://placehold.co/300x200/eee/333?text=FlatFood';
 
-            if (!name) {
-                window.showToast('Informe o nome do produto!', 'error');
-                return;
-            }
+            const prodObj = {
+                id: idxVal !== '' ? products[idxVal].id : 'p_' + Date.now(),
+                name, price, category, desc, tag, image
+            };
 
-            let prodToSave;
             if (idxVal !== '') {
-                const idx = parseInt(idxVal);
-                products[idx] = { ...products[idx], name, price, category, desc, tag, image };
-                prodToSave = products[idx];
+                products[idxVal] = prodObj;
             } else {
-                prodToSave = {
-                    id: 'p_' + Date.now(),
-                    name, price, category, desc, tag, image,
-                    active: true,
-                    icon: 'fa-box'
-                };
-                products.push(prodToSave);
+                products.push(prodObj);
             }
 
             if (isCloudActive && db) {
                 try {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodToSave.id), prodToSave);
-                    window.showToast(idxVal !== '' ? 'Produto atualizado na Nuvem!' : 'Novo produto cadastrado na Nuvem!');
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodObj.id), prodObj);
+                    showToast('Salvo na Nuvem com sucesso!');
                 } catch(e) {
                     saveDataLocal();
-                    window.showToast('Erro na Nuvem! Salvo localmente.', 'error');
+                    showToast('Salvo Localmente!', 'warning');
                 }
             } else {
                 saveDataLocal();
-                window.showToast(idxVal !== '' ? 'Produto atualizado (Local)!' : 'Novo produto cadastrado (Local)!');
+                showToast('Salvo Localmente!');
             }
 
-            window.renderAdminProductList();
-            window.renderProducts();
-            window.closeProductEditModal();
+            closeProductEditModal();
+            renderAdminProductList();
+            renderProducts();
         };
 
-        window.saveAdminSettings = async function() {
-            shopConfig.storeName = document.getElementById('adminStoreNameInput').value.trim() || 'Conveniência do Flat';
-            shopConfig.phone = document.getElementById('adminPhoneInput').value.trim();
-            shopConfig.pixKey = document.getElementById('adminPixInput').value.trim();
-            shopConfig.adminPass = document.getElementById('adminPassConfigInput').value.trim() || '@FlatFood2026@';
-
-            syncUIElementsWithConfig();
-
-            if (isCloudActive && db) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'config', 'settings'), shopConfig);
+        window.removeProductAdmin = async function(idx) {
+            const removed = products.splice(idx, 1);
+            if (removed[0] && isCloudActive && db) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', removed[0].id));
+                    showToast(`"${removed[0].name}" removido da nuvem!`);
+                } catch(e) {
+                    saveDataLocal();
+                    showToast('Removido localmente!');
+                }
             } else {
                 saveDataLocal();
+                showToast('Produto removido!');
+            }
+            renderAdminProductList();
+            renderProducts();
+        };
+
+        window.testFirebaseConnection = async function() {
+            const resultEl = document.getElementById('firebaseDiagResult');
+            if (!resultEl) return;
+            resultEl.innerText = "Testando conexão com o Firestore...";
+
+            if (!isCloudActive || !db) {
+                resultEl.innerHTML = "<span class='text-amber-600 font-bold'>⚠️ Modo Local Ativo. O Firebase não pôde ser contatado.</span>";
+                return;
             }
 
-            window.showToast('Configurações salvas na Nuvem!');
+            try {
+                const testDoc = doc(db, 'artifacts', appId, 'public', 'data', 'products', 'ping_test');
+                await setDoc(testDoc, { ping: true, timestamp: Date.now() });
+                resultEl.innerHTML = "<span class='text-emerald-600 font-bold'>✅ Conexão OK! O banco em nuvem respondeu com sucesso.</span>";
+            } catch(e) {
+                console.error("Erro no teste:", e);
+                resultEl.innerHTML = `<span class='text-red-600 font-bold'>❌ Erro de Permissão/Conexão: ${e.message}</span>`;
+            }
         };
 
-        window.updatePlaqueQrCode = function() {
-            const shopUrl = window.getShopUrl();
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
-            const qrImg = document.getElementById('adminMenuQrImage');
-            if (qrImg) qrImg.src = qrUrl;
+        window.saveStoreSettings = function() {
+            const phone = document.getElementById('adminPhoneInput').value.trim();
+            const pix = document.getElementById('adminPixInput').value.trim();
+
+            if (phone) storeSettings.whatsapp = phone;
+            if (pix) {
+                storeSettings.pix = pix;
+                document.getElementById('pixKeyDisplay').innerText = pix;
+            }
+            showToast('Configurações salvas!');
         };
 
-        window.printQrPlaque = function() {
-            window.print();
+        window.openQrModal = function() {
+            const qrCanvas = document.getElementById('qrcodeCanvas');
+            if (qrCanvas) {
+                qrCanvas.innerHTML = '';
+                const shopUrl = window.location.href.split('#')[0] + '#shop';
+                new QRCode(qrCanvas, {
+                    text: shopUrl,
+                    width: 160,
+                    height: 160
+                });
+            }
+            document.getElementById('qrModal').classList.remove('hidden');
         };
 
-        window.showToast = function(msg, type = 'success') {
+        window.closeQrModal = function() {
+            document.getElementById('qrModal').classList.add('hidden');
+        };
+
+        window.enterShopFromLanding = function() {
+            const input = document.getElementById('landingFlatInput').value.trim();
+            if (input) {
+                document.getElementById('guestInfoInput').value = input;
+            }
+            window.location.hash = 'shop';
+        };
+
+        window.showToast = function(msg, type = 'info') {
             const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const msgElem = document.getElementById('toastMessage');
-
-            if (msgElem) msgElem.innerText = msg;
-
-            if (icon) {
-                if (type === 'error') {
-                    icon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-base';
-                } else {
-                    icon.className = 'fa-solid fa-circle-check text-emerald-400 text-base';
-                }
-            }
-
-            if (toast) {
-                toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
-                toast.classList.add('opacity-100', 'translate-y-0');
-
-                setTimeout(() => {
-                    toast.classList.remove('opacity-100', 'translate-y-0');
-                    toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
-                }, 2500);
-            }
-        };
-
-        // ON APP LOAD
-        window.onload = async function() {
-            loadLocalStorageData();
-            const cloudOk = await initFirebase();
-            
-            const cloudBadge = document.getElementById('cloudStatusBadge');
-            if (cloudBadge) {
-                if (cloudOk) {
-                    cloudBadge.innerHTML = `<i class="fa-solid fa-cloud-check text-[9px]"></i> Nuvem Ativa`;
-                } else {
-                    cloudBadge.innerHTML = `<i class="fa-solid fa-hard-drive text-[9px]"></i> Modo Local`;
-                }
-            }
-
-            window.handleHashRouting();
-            window.addEventListener('hashchange', window.handleHashRouting);
-            window.renderCategories();
-            window.renderProducts();
-            window.updateCartUI();
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transition transform ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         };
     </script>
 </body>

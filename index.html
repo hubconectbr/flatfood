@@ -308,6 +308,12 @@
                                 <input type="text" id="adminPixInput" value="03137189110" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm">
                             </div>
 
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Firebase API Key (obrigatório para Nuvem)</label>
+                                <input type="text" id="adminApiKeyInput" placeholder="Ex: AIzaSyB..." class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm font-mono">
+                                <span class="text-[10px] text-gray-400 block mt-1">Obtenha no Firebase Console > Geral > Configurações do Projeto > Chave da API da Web.</span>
+                            </div>
+
                             <div class="pt-4 border-t border-gray-100 space-y-3">
                                 <h4 class="font-bold text-sm text-gray-800">Diagnóstico do Firebase Database</h4>
                                 <button onclick="testFirebaseConnection()" type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition flex items-center space-x-2">
@@ -493,6 +499,7 @@
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'flatfood-app';
         let firebaseConfig = {
+            apiKey: localStorage.getItem('flatfood_api_key') || "",
             projectId: "flatfood-d4296",
             authDomain: "flatfood-d4296.firebaseapp.com",
             storageBucket: "flatfood-d4296.firebasestorage.app"
@@ -507,6 +514,9 @@
 
         // Tentar inicializar Firebase
         try {
+            if (!firebaseConfig.apiKey) {
+                throw new Error("Chave 'apiKey' do Firebase não configurada.");
+            }
             app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             auth = getAuth(app);
@@ -521,6 +531,7 @@
         } catch (e) {
             console.warn("Modo Local Ativo (Firebase Fallback):", e);
             updateCloudStatusUI(false, "Modo Local");
+            window.firebaseInitError = e.message;
         }
 
         function updateCloudStatusUI(active, text) {
@@ -564,6 +575,12 @@
             handleRouting();
             window.addEventListener('hashchange', handleRouting);
             loadLocalStorageData();
+
+            // Preencher campos de configuração salvos
+            const savedApiKey = localStorage.getItem('flatfood_api_key');
+            if (savedApiKey && document.getElementById('adminApiKeyInput')) {
+                document.getElementById('adminApiKeyInput').value = savedApiKey;
+            }
 
             if (isCloudActive && db) {
                 try {
@@ -955,7 +972,8 @@
             resultEl.innerText = "Testando conexão com o Firestore...";
 
             if (!isCloudActive || !db) {
-                resultEl.innerHTML = "<span class='text-amber-600 font-bold'>⚠️ Modo Local Ativo. O Firebase não pôde ser contatado.</span>";
+                const cause = window.firebaseInitError || "Sem apiKey do Firebase configurada.";
+                resultEl.innerHTML = `<span class='text-amber-600 font-bold'>⚠️ Modo Local Ativo. Motivo: ${cause}</span>`;
                 return;
             }
 
@@ -972,13 +990,17 @@
         window.saveStoreSettings = function() {
             const phone = document.getElementById('adminPhoneInput').value.trim();
             const pix = document.getElementById('adminPixInput').value.trim();
+            const apiKey = document.getElementById('adminApiKeyInput')?.value.trim();
 
             if (phone) storeSettings.whatsapp = phone;
             if (pix) {
                 storeSettings.pix = pix;
                 document.getElementById('pixKeyDisplay').innerText = pix;
             }
-            showToast('Configurações salvas!');
+            if (apiKey !== undefined) {
+                localStorage.setItem('flatfood_api_key', apiKey);
+            }
+            showToast('Configurações salvas! Recarregue a página para aplicar a API Key.');
         };
 
         window.openQrModal = function() {

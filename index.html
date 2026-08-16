@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- STREAMING_CHUNK:Configuring meta tags and loading external libraries... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlatFood - Mini Mercado Autoatendimento 24h</title>
@@ -36,7 +35,6 @@
     </script>
 
     <style>
-        /* STREAMING_CHUNK:Styling page layout and custom scrollbars... */
         body { font-family: 'Inter', sans-serif; background-color: #F7F7F7; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -53,7 +51,6 @@
 </head>
 <body class="text-ifood-darkText antialiased selection:bg-ifood-red selection:text-white">
 
-    <!-- STREAMING_CHUNK:Rendering navigation bar... -->
     <!-- NAVBAR FIXA -->
     <header class="bg-white sticky top-0 z-40 shadow-sm no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -95,7 +92,6 @@
         </div>
     </header>
 
-    <!-- STREAMING_CHUNK:Rendering main view router... -->
     <!-- VIEW CONTAINER -->
     <main id="mainContainer">
         <!-- 1. LANDING PAGE (Visão Inicial Estilo iFood) -->
@@ -171,7 +167,6 @@
             </div>
         </section>
 
-        <!-- STREAMING_CHUNK:Rendering cardápio / store section... -->
         <!-- 2. CARDÁPIO / SHOP VIEW (#shop) -->
         <section id="viewShop" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             
@@ -220,7 +215,6 @@
             </div>
         </section>
 
-        <!-- STREAMING_CHUNK:Rendering admin dashboard... -->
         <!-- 3. ÁREA ADMINISTRATIVA (#admin) -->
         <section id="viewAdmin" class="view-section hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             
@@ -231,7 +225,7 @@
                         <i class="fa-solid fa-user-shield"></i>
                     </div>
                     <h2 class="text-2xl font-black">Portal do Proprietário</h2>
-                    <p class="text-xs text-gray-500">Digite a senha master para gerenciar produtos, preços e QR Codes.</p>
+                    <p class="text-xs text-gray-500">Digite a senha master para gerenciar produtos, estoques e preços.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -260,9 +254,13 @@
                             <i class="fa-solid fa-plus"></i>
                             <span>Novo Produto</span>
                         </button>
+                        <button onclick="syncAllProductsToFirebase()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm" title="Envia todos os 46 produtos padrão direto para o Firebase">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>🚀 Sincronizar Todos no Firebase</span>
+                        </button>
                         <button onclick="openQrModal()" class="bg-gray-800 hover:bg-black text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center space-x-2 transition shadow-sm">
                             <i class="fa-solid fa-qrcode"></i>
-                            <span>Gerar Placa QR Code</span>
+                            <span>Placa QR</span>
                         </button>
                         <button onclick="logoutAdmin()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl text-xs transition">
                             Sair
@@ -274,7 +272,7 @@
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-6">
                     <div class="flex space-x-4 border-b border-gray-200 pb-4">
                         <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="font-bold text-sm text-ifood-red border-b-2 border-ifood-red pb-2">
-                            📦 Lista de Produtos
+                            📦 Lista de Produtos (Estoque & Preços)
                         </button>
                         <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="font-bold text-sm text-gray-500 hover:text-gray-700 pb-2">
                             ⚙️ Configurações & Teste Nuvem
@@ -290,6 +288,7 @@
                                         <th class="p-3 rounded-l-xl">Produto</th>
                                         <th class="p-3">Categoria</th>
                                         <th class="p-3">Preço (R$)</th>
+                                        <th class="p-3">Estoque</th>
                                         <th class="p-3">Tag/Selo</th>
                                         <th class="p-3 text-right rounded-r-xl">Ações</th>
                                     </tr>
@@ -342,7 +341,6 @@
         </section>
     </main>
 
-    <!-- STREAMING_CHUNK:Rendering cart, edit product, and QR code modals... -->
     <!-- MODAL DE CARRINHO E CHECKOUT -->
     <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex justify-end">
         <div class="bg-white w-full max-w-md h-full flex flex-col justify-between p-6 shadow-2xl overflow-y-auto">
@@ -424,10 +422,14 @@
                     <input type="text" id="editProdName" required placeholder="Ex: Coca-Cola Zero Lata" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Preço (R$)*</label>
-                        <input type="number" step="0.50" id="editProdPrice" required placeholder="7.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                        <input type="number" step="0.10" id="editProdPrice" required placeholder="7.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Estoque*</label>
+                        <input type="number" id="editProdStock" required placeholder="10" min="0" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria*</label>
@@ -519,26 +521,71 @@
         let app, db, auth;
         let isCloudActive = false;
 
-        // Tentar inicializar Firebase
-        try {
-            if (!firebaseConfig.apiKey) {
-                throw new Error("Chave 'apiKey' do Firebase não configurada.");
-            }
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
+        // PRODUTOS PADRÃO COM ESTOQUE INICIAL
+        const DEFAULT_PRODUCTS = [
+            { id: 'p1', name: 'Coca-Cola Zero 350ml', price: 7.00, stock: 12, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p2', name: 'Coca-Cola Original 350ml', price: 7.00, stock: 15, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'MAIS VENDIDA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p3', name: 'Sprite Zero 350ml', price: 7.00, stock: 8, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'REFRESCANTE', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p4', name: 'Sprite Normal 350ml', price: 7.00, stock: 10, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p5', name: 'Água Mineral com Gás 500ml', price: 5.00, stock: 20, category: 'Bebidas', desc: 'Garrafa 500ml bem gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p6', name: 'Água Saborizada', price: 8.00, stock: 6, category: 'Bebidas', desc: 'Garrafa 500ml refrescante', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p7', name: 'Espumante Brut / Moscatel', price: 70.00, stock: 4, category: 'Vinhos', desc: 'Garrafa ideal para celebração', tag: 'ESPECIAL CASAL', image: 'https://images.unsplash.com/photo-1569919659476-f0852f6834b7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p8', name: 'Barra Chocolate', price: 15.00, stock: 10, category: 'Snacks', desc: 'Barra ou bombom selecionado', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p9', name: 'Bisc. Bauducco Especulos', price: 7.00, stock: 8, category: 'Snacks', desc: 'Pacote crocante saboroso', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p10', name: 'Bisc. Marilan chocolate', price: 4.00, stock: 12, category: 'Snacks', desc: 'Biscoito recheado de chocolate', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p11', name: 'Água saborizada 350ml', price: 12.00, stock: 5, category: 'Bebidas', desc: 'Lata / Garrafa saborizada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p12', name: 'Ice Xonei 350ml', price: 8.00, stock: 8, category: 'Bebidas', desc: 'Bebida mista gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p13', name: 'Paçoca', price: 3.00, stock: 25, category: 'Snacks', desc: 'Docinho tradicional de amendoim', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1582293041079-7814c2f12063?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p14', name: 'Chicl. Mentos', price: 19.00, stock: 7, category: 'Snacks', desc: 'Garrafinha de chiclete Mentos', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p15', name: 'Água de coco', price: 17.00, stock: 6, category: 'Bebidas', desc: 'Água de coco natural e gelada', tag: 'SAUDÁVEL', image: 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p16', name: 'Salg. Levinhos', price: 4.00, stock: 10, category: 'Snacks', desc: 'Salgadinho leve crocante', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p17', name: 'Chocolate (Suflair, prestígio, galak, Negresco)', price: 15.00, stock: 10, category: 'Snacks', desc: 'Barra de chocolate especial', tag: 'CHOCOLATE', image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p18', name: 'Bisc. Bauducco', price: 15.00, stock: 6, category: 'Snacks', desc: 'Pacote de biscoito Bauducco', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p19', name: 'Salg. Elma chips', price: 8.00, stock: 12, category: 'Snacks', desc: 'Pacote salgadinho Elma Chips', tag: 'CROCANTE', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p20', name: 'Salg. Whav batata', price: 6.00, stock: 9, category: 'Snacks', desc: 'Batata frita crocante em pacote', tag: 'CROCANTE', image: 'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p21', name: 'Bolinho Bauducco', price: 4.00, stock: 14, category: 'Snacks', desc: 'Bolinho macio recheado', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p22', name: 'Chocolate garoto talento', price: 8.00, stock: 11, category: 'Snacks', desc: 'Tablete Talento saboroso', tag: 'CHOCOLATE', image: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p23', name: 'Bombom garoto', price: 20.00, stock: 5, category: 'Snacks', desc: 'Caixa ou seleção de bombons Garoto', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1548848221-0c2e497ed557?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p24', name: 'Tâmara com caroço', price: 12.00, stock: 8, category: 'Snacks', desc: 'Tâmaras selecionadas e doces', tag: 'SAUDÁVEL', image: 'https://images.unsplash.com/photo-1596591606975-97ee5cef3a1e?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p25', name: 'Amendoim', price: 2.00, stock: 30, category: 'Snacks', desc: 'Pacotinho de amendoim torrado', tag: 'PETISCO', image: 'https://images.unsplash.com/photo-1567892999338-96919288305b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p26', name: 'Barra Snickers', price: 7.00, stock: 15, category: 'Snacks', desc: 'Barra de chocolate Snickers', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p27', name: 'Refri fys', price: 6.00, stock: 10, category: 'Bebidas', desc: 'Refrigerante Fys lata gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p28', name: 'Coca lata', price: 7.00, stock: 12, category: 'Bebidas', desc: 'Coca-Cola lata 350ml gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p29', name: 'Castanha Pará', price: 39.90, stock: 5, category: 'Snacks', desc: 'Pacote de castanha do Pará', tag: 'NOBRE', image: 'https://images.unsplash.com/photo-1543208541-0059d0620387?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p30', name: 'Castanha caju', price: 37.99, stock: 5, category: 'Snacks', desc: 'Pacote de castanha de caju torrada', tag: 'NOBRE', image: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p31', name: 'Refri sukita', price: 7.00, stock: 8, category: 'Bebidas', desc: 'Refrigerante Sukita lata gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p32', name: 'Pepsi zero', price: 7.00, stock: 8, category: 'Bebidas', desc: 'Refrigerante Pepsi Zero lata', tag: 'ZERO', image: 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p33', name: 'Fys Água Tônica', price: 7.00, stock: 6, category: 'Bebidas', desc: 'Água tônica Fys gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p34', name: 'Red Bull lata', price: 18.00, stock: 10, category: 'Bebidas', desc: 'Energético Red Bull lata 250ml', tag: 'ENERGIA', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p35', name: 'Sprite s/açúcar', price: 8.00, stock: 7, category: 'Bebidas', desc: 'Sprite sem açúcar lata gelada', tag: 'ZERO', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p36', name: 'Cerveja Amstel', price: 8.00, stock: 18, category: 'Bebidas', desc: 'Cerveja Amstel lata estupidamente gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p37', name: 'Ruffles batata Pringles', price: 15.00, stock: 9, category: 'Snacks', desc: 'Batata crocante selecionada', tag: 'CROCANTE', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p38', name: 'Yakisoba Nissin', price: 12.00, stock: 8, category: 'Snacks', desc: 'Macarrão instantâneo Yakisoba', tag: 'RÁPIDO', image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p39', name: 'Yakisoba Nissin tomate', price: 14.00, stock: 6, category: 'Snacks', desc: 'Macarrão instantâneo sabor Tomate', tag: 'RÁPIDO', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p40', name: 'Vinho camp Largo 750 ml', price: 55.00, stock: 5, category: 'Vinhos', desc: 'Vinho Campo Largo garrafa 750ml', tag: 'VINHO', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p41', name: 'Vinho M. James', price: 90.00, stock: 3, category: 'Vinhos', desc: 'Vinho fino Marcus James 750ml', tag: 'FINO', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p42', name: 'Necta nutri 290 kt Pessego', price: 10.00, stock: 7, category: 'Bebidas', desc: 'Suco Néctar de Pêssego', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p43', name: 'Água com/Gás', price: 5.00, stock: 15, category: 'Bebidas', desc: 'Água mineral levemente gaseificada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p44', name: 'Campo Largo red 500', price: 42.00, stock: 4, category: 'Vinhos', desc: 'Vinho Tinto Campo Largo 500ml', tag: 'TINTO', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p45', name: 'V D Bosco', price: 65.99, stock: 4, category: 'Vinhos', desc: 'Vinho Dom Bosco garrafa especial', tag: 'TRADICIONAL', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p46', name: 'Tic tac', price: 6.00, stock: 20, category: 'Snacks', desc: 'Caixinha de pastilhas Tic Tac', tag: 'REFRESCANTE', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' }
+        ];
 
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-            isCloudActive = true;
-            updateCloudStatusUI(true, "Nuvem Conectada");
-        } catch (e) {
-            console.warn("Modo Local Ativo (Firebase Fallback):", e);
-            updateCloudStatusUI(false, "Modo Local");
-            window.firebaseInitError = e.message;
+        let products = [];
+        let cart = [];
+        let currentCategory = 'Todas';
+        let storeSettings = {
+            whatsapp: '5531999999999',
+            pix: '03137189110'
+        };
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transition transform ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         function updateCloudStatusUI(active, text) {
@@ -553,45 +600,6 @@
             } else {
                 if (badge) badge.className = "flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200";
                 if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-500";
-            }
-        }
-
-        // PRODUTOS PADRÃO
-        const DEFAULT_PRODUCTS = [
-            { id: 'b1', name: 'Coca-Cola Lata 350ml', price: 7.00, category: 'Bebidas', desc: 'Gelada', tag: 'Mais Vendido', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
-            { id: 'b2', name: 'Coca-Cola Zero Lata 350ml', price: 7.00, category: 'Bebidas', desc: 'Gelada sem açúcar', tag: 'Zero', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80' },
-            { id: 'b3', name: 'Sprite Lata 350ml', price: 7.00, category: 'Bebidas', desc: 'Sabor Limão', tag: 'Gelada', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
-            { id: 'b4', name: 'H2OH! Limoneto 500ml', price: 8.50, category: 'Bebidas', desc: 'Levemente gaseificada', tag: 'Refrescante', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=300&auto=format&fit=crop&q=80' },
-            { id: 'v1', name: 'Vinho Espumante Champanhe', price: 65.00, category: 'Vinhos', desc: 'Ideal para casais', tag: 'Especial Casal', image: 'https://images.unsplash.com/photo-1569919659476-f0852f6834b7?w=300&auto=format&fit=crop&q=80' },
-            { id: 'v2', name: 'Vinho Italiano Frisante', price: 55.00, category: 'Vinhos', desc: 'Importado leve e suave', tag: 'Italiano', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
-            { id: 's1', name: 'Chocolate Barra Nobre', price: 9.00, category: 'Snacks', desc: 'Ao leite / Meio amargo', tag: 'Doce', image: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=300&auto=format&fit=crop&q=80' },
-            { id: 'h1', name: 'Escova de Dentes Macia', price: 10.00, category: 'Higiene', desc: 'Embalagem individual', tag: 'Higiene', image: 'https://images.unsplash.com/photo-1522849676594-ba09117cf494?w=300&auto=format&fit=crop&q=80' },
-            { id: 'h2', name: 'Creme Dental / Pasta', price: 8.00, category: 'Higiene', desc: 'Proteção total 90g', tag: 'Higiene', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80' },
-            { id: 'h3', name: 'Aparelho de Barbear / Depilar', price: 7.00, category: 'Higiene', desc: 'Prestobarba individual', tag: 'Higiene', image: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=300&auto=format&fit=crop&q=80' }
-        ];
-
-        let products = [];
-        let cart = [];
-        let currentCategory = 'Todas';
-        let storeSettings = {
-            whatsapp: '5531999999999',
-            pix: '03137189110'
-        };
-
-        function handleRouting() {
-            const hash = window.location.hash.replace('#', '') || 'landing';
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-
-            if (hash === 'admin') {
-                const viewAdmin = document.getElementById('viewAdmin');
-                if (viewAdmin) viewAdmin.classList.remove('hidden');
-            } else if (hash === 'shop') {
-                const viewShop = document.getElementById('viewShop');
-                if (viewShop) viewShop.classList.remove('hidden');
-                renderProducts();
-            } else {
-                const viewLanding = document.getElementById('viewLanding');
-                if (viewLanding) viewLanding.classList.remove('hidden');
             }
         }
 
@@ -616,6 +624,23 @@
 
         function saveDataLocal() {
             localStorage.setItem('flatfood_products', JSON.stringify(products));
+        }
+
+        function handleRouting() {
+            const hash = window.location.hash.replace('#', '') || 'landing';
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+
+            if (hash === 'admin') {
+                const viewAdmin = document.getElementById('viewAdmin');
+                if (viewAdmin) viewAdmin.classList.remove('hidden');
+            } else if (hash === 'shop') {
+                const viewShop = document.getElementById('viewShop');
+                if (viewShop) viewShop.classList.remove('hidden');
+                renderProducts();
+            } else {
+                const viewLanding = document.getElementById('viewLanding');
+                if (viewLanding) viewLanding.classList.remove('hidden');
+            }
         }
 
         function renderProducts() {
@@ -645,6 +670,7 @@
             }
 
             filtered.forEach(p => {
+                const isOutOfStock = (p.stock !== undefined && p.stock <= 0);
                 const card = document.createElement('div');
                 card.className = "bg-white rounded-3xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition space-y-3 flex flex-col justify-between";
                 card.innerHTML = `
@@ -652,18 +678,20 @@
                         <div class="relative h-40 rounded-2xl overflow-hidden bg-gray-100">
                             <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x200/eee/333?text=FlatFood'">
                             ${p.tag ? `<span class="absolute top-2 left-2 bg-ifood-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow">${p.tag}</span>` : ''}
+                            ${isOutOfStock ? `<span class="absolute top-2 right-2 bg-gray-800 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow">Esgotado</span>` : ''}
                         </div>
                         <div>
                             <h3 class="font-bold text-base leading-snug">${p.name}</h3>
                             <p class="text-xs text-gray-400 mt-1">${p.desc || ''}</p>
+                            <p class="text-[11px] font-medium text-gray-500 mt-1">${isOutOfStock ? '<span class="text-red-600 font-bold">Sem Estoque</span>' : `Estoque: ${p.stock ?? 10} un.`}</p>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-between pt-2 border-t border-gray-50">
                         <span class="text-lg font-black text-ifood-darkText">R$ ${Number(p.price).toFixed(2).replace('.', ',')}</span>
-                        <button onclick="addToCart('${p.id}')" class="bg-ifood-red hover:bg-ifood-darkRed text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition shadow-sm">
-                            <i class="fa-solid fa-plus"></i>
-                            <span>Adicionar</span>
+                        <button onclick="addToCart('${p.id}')" ${isOutOfStock ? 'disabled' : ''} class="${isOutOfStock ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-ifood-red hover:bg-ifood-darkRed text-white shadow-sm'} font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition">
+                            <i class="fa-solid fa-${isOutOfStock ? 'ban' : 'plus'}"></i>
+                            <span>${isOutOfStock ? 'Esgotado' : 'Adicionar'}</span>
                         </button>
                     </div>
                 `;
@@ -691,9 +719,17 @@
         function addToCart(prodId) {
             const prod = products.find(p => p.id === prodId);
             if (!prod) return;
+            if (prod.stock !== undefined && prod.stock <= 0) {
+                showToast('Produto esgotado no momento!', 'error');
+                return;
+            }
 
             const existing = cart.find(item => item.id === prodId);
             if (existing) {
+                if (prod.stock !== undefined && existing.qty >= prod.stock) {
+                    showToast('Quantidade máxima em estoque atingida!', 'error');
+                    return;
+                }
                 existing.qty++;
             } else {
                 cart.push({ ...prod, qty: 1 });
@@ -858,12 +894,13 @@
                     </td>
                     <td class="p-3 text-gray-500">${p.category}</td>
                     <td class="p-3 font-black text-ifood-red">R$ ${Number(p.price).toFixed(2)}</td>
+                    <td class="p-3 font-bold">${p.stock ?? 10} un.</td>
                     <td class="p-3"><span class="text-xs bg-gray-100 px-2 py-0.5 rounded font-bold">${p.tag || '-'}</span></td>
                     <td class="p-3 text-right space-x-2">
-                        <button onclick="editProductAdmin(${idx})" class="text-blue-600 hover:text-blue-800 font-bold text-xs">
+                        <button onclick="editProductAdmin(${idx})" class="text-blue-600 hover:text-blue-800 font-bold text-xs" title="Editar Preço e Estoque">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-                        <button onclick="removeProductAdmin(${idx})" class="text-red-600 hover:text-red-800 font-bold text-xs">
+                        <button onclick="removeProductAdmin(${idx})" class="text-red-600 hover:text-red-800 font-bold text-xs" title="Excluir">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
@@ -876,6 +913,7 @@
             document.getElementById('editProdId').value = '';
             document.getElementById('editProdName').value = '';
             document.getElementById('editProdPrice').value = '';
+            document.getElementById('editProdStock').value = '10';
             document.getElementById('editProdCategory').value = 'Bebidas';
             document.getElementById('editProdDesc').value = '';
             document.getElementById('editProdTag').value = '';
@@ -896,12 +934,13 @@
             document.getElementById('editProdId').value = idx;
             document.getElementById('editProdName').value = p.name || '';
             document.getElementById('editProdPrice').value = p.price || 0;
+            document.getElementById('editProdStock').value = p.stock ?? 10;
             document.getElementById('editProdCategory').value = p.category || 'Bebidas';
             document.getElementById('editProdDesc').value = p.desc || '';
             document.getElementById('editProdTag').value = p.tag || '';
             document.getElementById('editProdImage').value = p.image || '';
 
-            document.getElementById('productModalTitle').innerText = 'Editar Produto';
+            document.getElementById('productModalTitle').innerText = 'Editar Preço, Estoque e Detalhes';
             document.getElementById('productEditModal').classList.remove('hidden');
         }
 
@@ -909,6 +948,7 @@
             const idxVal = document.getElementById('editProdId').value;
             const name = document.getElementById('editProdName').value.trim();
             const price = parseFloat(document.getElementById('editProdPrice').value) || 0;
+            const stock = parseInt(document.getElementById('editProdStock').value) || 0;
             const category = document.getElementById('editProdCategory').value;
             const desc = document.getElementById('editProdDesc').value.trim();
             const tag = document.getElementById('editProdTag').value.trim();
@@ -916,7 +956,7 @@
 
             const prodObj = {
                 id: idxVal !== '' ? products[idxVal].id : 'p_' + Date.now(),
-                name, price, category, desc, tag, image
+                name, price, stock, category, desc, tag, image
             };
 
             if (idxVal !== '') {
@@ -959,6 +999,28 @@
             }
             renderAdminProductList();
             renderProducts();
+        }
+
+        async function syncAllProductsToFirebase() {
+            if (!isCloudActive || !db) {
+                showToast('Firebase não está ativo! Configure a API Key na aba Configurações.', 'error');
+                return;
+            }
+
+            showToast('Iniciando sincronização dos 46 produtos...');
+            try {
+                let successCount = 0;
+                for (const prod of DEFAULT_PRODUCTS) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prod.id), prod);
+                    successCount++;
+                }
+                showToast(`🚀 Sucesso! ${successCount} produtos cadastrados e sincronizados no Firebase!`);
+                renderProducts();
+                renderAdminProductList();
+            } catch (e) {
+                console.error("Erro na sincronização em massa:", e);
+                showToast(`Erro ao sincronizar: ${e.message}`, 'error');
+            }
         }
 
         async function testFirebaseConnection() {
@@ -1026,16 +1088,7 @@
             window.location.hash = 'shop';
         }
 
-        function showToast(msg, type = 'info') {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            toast.innerText = msg;
-            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transition transform ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
-        }
-
-        // EXPORTAR TODAS AS FUNÇÕES PARA O ESCOPO GLOBAL (window)
+        // BINDING ALL FUNCTIONS TO WINDOW
         window.renderProducts = renderProducts;
         window.filterCategory = filterCategory;
         window.searchProducts = searchProducts;
@@ -1054,6 +1107,7 @@
         window.editProductAdmin = editProductAdmin;
         window.saveProductFromModal = saveProductFromModal;
         window.removeProductAdmin = removeProductAdmin;
+        window.syncAllProductsToFirebase = syncAllProductsToFirebase;
         window.testFirebaseConnection = testFirebaseConnection;
         window.saveStoreSettings = saveStoreSettings;
         window.openQrModal = openQrModal;
@@ -1061,40 +1115,57 @@
         window.enterShopFromLanding = enterShopFromLanding;
         window.showToast = showToast;
 
-        function initApp() {
+        async function initFirebase() {
+            try {
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("Chave 'apiKey' do Firebase não configurada.");
+                }
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                isCloudActive = true;
+                updateCloudStatusUI(true, "Nuvem Conectada");
+
+                const prodRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+                onSnapshot(prodRef, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const cloudItems = [];
+                        snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
+                        products = cloudItems;
+                        renderProducts();
+                        renderAdminProductList();
+                        updateCloudStatusUI(true, "Nuvem Sincronizada");
+                    }
+                }, (err) => {
+                    console.warn("Erro no listener da nuvem:", err);
+                    updateCloudStatusUI(false, "Sincronização Falhou");
+                });
+            } catch (e) {
+                console.warn("Modo Local Ativo (Firebase Fallback):", e);
+                updateCloudStatusUI(false, "Modo Local");
+                window.firebaseInitError = e.message;
+            }
+        }
+
+        async function initApp() {
             loadLocalStorageData();
             handleRouting();
             window.addEventListener('hashchange', handleRouting);
 
-            // Preencher campos de configuração salvos
             const savedApiKey = localStorage.getItem('flatfood_api_key');
             if (savedApiKey && document.getElementById('adminApiKeyInput')) {
                 document.getElementById('adminApiKeyInput').value = savedApiKey;
             }
 
-            if (isCloudActive && db) {
-                try {
-                    const prodRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
-                    onSnapshot(prodRef, (snapshot) => {
-                        if (!snapshot.empty) {
-                            const cloudItems = [];
-                            snapshot.forEach(doc => cloudItems.push({ id: doc.id, ...doc.data() }));
-                            products = cloudItems;
-                            renderProducts();
-                            renderAdminProductList();
-                            updateCloudStatusUI(true, "Nuvem Sincronizada");
-                        }
-                    }, (err) => {
-                        console.warn("Erro no listener da nuvem:", err);
-                        updateCloudStatusUI(false, "Sincronização Falhou");
-                    });
-                } catch(e) {
-                    console.warn("Snapshot não ativado:", e);
-                }
-            }
+            await initFirebase();
         }
 
-        // Executa a inicialização
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             initApp();
         } else {

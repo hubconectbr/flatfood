@@ -589,12 +589,15 @@
         }
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'flatfood-app';
-        let firebaseConfig = {
-            apiKey: localStorage.getItem('flatfood_api_key') || "",
-            projectId: "flatfood-d4296",
-            authDomain: "flatfood-d4296.firebaseapp.com",
-            storageBucket: "flatfood-d4296.firebasestorage.app"
-        };
+        let firebaseConfig =firebaseConfig = {
+              apiKey: "AIzaSyDvEQfDJmGid_iCgiQM9XThYVe5LigVG5A",
+              authDomain: "flatfood-d4296.firebaseapp.com",
+              projectId: "flatfood-d4296",
+              storageBucket: "flatfood-d4296.firebasestorage.app",
+              messagingSenderId: "695926629715",
+              appId: "1:695926629715:web:42b50ff920566121b8eda6",
+              measurementId: "G-P4GX2HG9YC"
+            };
 
         if (typeof __firebase_config !== 'undefined') {
             try { firebaseConfig = JSON.parse(__firebase_config); } catch(e){}

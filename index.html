@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlatFood - Mini Mercado Autoatendimento 24h</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ifood: {
+                            red: '#EA1D2C',
+                            darkRed: '#B81320',
+                            lightBg: '#F7F7F7',
+                            grayText: '#717171',
+                            darkText: '#3E3E3E'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F7F7F7; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hero-pattern {
+            background-color: #8B0000;
+            background-image: radial-gradient(#EA1D2C 1px, transparent 1px);
+            background-size: 16px 16px;
+        }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        button, a, input, select { touch-action: manipulation; }
+        
+        /* Estilo do Terminal Console */
+        .terminal-box {
+            background-color: #0d1117;
+            color: #39d353;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .terminal-line-info { color: #58a6ff; }
+        .terminal-line-warn { color: #d29922; }
+        .terminal-line-error { color: #f85149; }
+        .terminal-line-success { color: #39d353; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="text-ifood-darkText antialiased selection:bg-ifood-red selection:text-white">
+
+    <!-- NAVBAR FIXA RESPONSIVA -->
+    <header class="bg-white sticky top-0 z-40 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 gap-2">
+                <!-- Logo iFood Style -->
+                <div class="flex items-center space-x-2 sm:space-x-3 cursor-pointer shrink-0" onclick="window.location.hash = ''">
+                    <div class="bg-ifood-red text-white font-extrabold text-xl sm:text-2xl px-2.5 py-1 rounded-2xl tracking-tighter shadow-md">
+                        Flat<span class="text-yellow-300">Food</span>
+                    </div>
+                    <span class="hidden md:inline-block text-xs font-semibold bg-red-100 text-ifood-red px-2.5 py-1 rounded-full">
+                        <i class="fa-solid fa-store mr-1"></i> Autoatendimento 24h
+                    </span>
+                </div>
+
+                <!-- Status da Nuvem & Botões de Ação -->
+                <div class="flex items-center space-x-1.5 sm:space-x-3">
+                    <div id="cloudStatusBadge" class="flex items-center space-x-1.5 text-[11px] sm:text-xs font-medium px-2 sm:px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                        <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span id="cloudStatusText" class="truncate max-w-[90px] sm:max-w-none">Carregando...</span>
+                    </div>
+
+                    <button onclick="window.location.hash = 'shop'" class="text-xs sm:text-sm font-semibold text-gray-700 hover:text-ifood-red transition px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-100 flex items-center space-x-1">
+                        <i class="fa-solid fa-utensils text-sm"></i>
+                        <span class="hidden xs:inline">Cardápio</span>
+                    </button>
+
+                    <!-- Carrinho Flutuante Header -->
+                    <button onclick="openCartModal()" class="relative bg-ifood-red hover:bg-ifood-darkRed text-white px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm flex items-center space-x-1.5 sm:space-x-2 transition shadow-md min-h-[40px]">
+                        <i class="fa-solid fa-basket-shopping text-sm sm:text-base"></i>
+                        <span class="hidden sm:inline">Carrinho</span>
+                        <span id="headerCartCount" class="bg-white text-ifood-red text-[11px] sm:text-xs font-black px-1.5 sm:px-2 py-0.5 rounded-full">0</span>
+                    </button>
+
+                    <!-- Acesso Admin -->
+                    <button onclick="window.location.hash = 'admin'" class="text-xs text-gray-500 hover:text-ifood-red p-2" title="Portal Admin">
+                        <i class="fa-solid fa-lock text-sm sm:text-base"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- VIEW CONTAINER -->
+    <main id="mainContainer">
+        <!-- 1. LANDING PAGE -->
+        <section id="viewLanding" class="view-section">
+            <div class="hero-pattern min-h-[calc(100vh-4rem)] text-white relative overflow-hidden py-8 sm:py-12 px-4 sm:px-6 lg:px-8 flex items-center">
+                <div class="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+                    
+                    <!-- Lado Esquerdo -->
+                    <div class="lg:col-span-7 space-y-4 sm:space-y-6 text-center lg:text-left">
+                        <div class="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium border border-white/20">
+                            <i class="fa-solid fa-bolt text-yellow-300"></i>
+                            <span>Mercadinho de Conveniência no seu Flat</span>
+                        </div>
+                        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight sm:leading-none">
+                            Conecte sua estadia à praticidade total
+                        </h1>
+                        <p class="text-base sm:text-lg lg:text-xl text-red-100 max-w-2xl font-normal leading-relaxed mx-auto lg:mx-0">
+                            Pegue bebidas geladas, chocolates, vinhos e itens de higiene sem sair da sua acomodação. Pague via PIX e aproveite!
+                        </p>
+
+                        <!-- Benefícios -->
+                        <div class="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-white/10 max-w-xl mx-auto lg:mx-0 text-center">
+                            <div>
+                                <h4 class="font-bold text-lg sm:text-xl text-yellow-300">24/7</h4>
+                                <p class="text-[10px] sm:text-xs text-red-100">Disponível sempre</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg sm:text-xl text-yellow-300">PIX</h4>
+                                <p class="text-[10px] sm:text-xs text-red-100">Pagamento na hora</p>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg sm:text-xl text-yellow-300">Zero Espera</h4>
+                                <p class="text-[10px] sm:text-xs text-red-100">Direto no quarto</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lado Direito -->
+                    <div class="lg:col-span-5 w-full">
+                        <div class="bg-white text-ifood-darkText rounded-3xl p-5 sm:p-8 shadow-2xl border border-gray-100 space-y-5 sm:space-y-6">
+                            <div class="space-y-1.5 text-center sm:text-left">
+                                <span class="text-xs font-bold uppercase tracking-wider text-ifood-red">Autoatendimento</span>
+                                <h2 class="text-xl sm:text-2xl font-black">Acesse o Cardápio do Flat</h2>
+                                <p class="text-xs sm:text-sm text-gray-500">Escolha os produtos do seu frigobar ou prateleira e pague de forma rápida.</p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seu Nome ou Número do Flat</label>
+                                    <input type="text" id="landingFlatInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-ifood-red focus:border-transparent outline-none transition text-sm">
+                                </div>
+
+                                <button onclick="enterShopFromLanding()" class="w-full bg-ifood-red hover:bg-ifood-darkRed text-white font-bold py-3.5 sm:py-4 rounded-xl transition shadow-lg text-sm sm:text-base flex items-center justify-center space-x-2">
+                                    <span>Ver Produtos Disponíveis</span>
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+
+                                <div class="relative flex py-1 items-center">
+                                    <div class="flex-grow border-t border-gray-200"></div>
+                                    <span class="flex-shrink mx-4 text-xs font-semibold text-gray-400 uppercase">ou</span>
+                                    <div class="flex-grow border-t border-gray-200"></div>
+                                </div>
+
+                                <button onclick="window.location.hash = 'admin'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition text-xs flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                    <span>Acesso Administrativo (Lojista)</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. CARDÁPIO / SHOP VIEW (#shop) -->
+        <section id="viewShop" class="view-section hidden max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5 sm:space-y-6">
+            
+            <!-- Banner -->
+            <div class="bg-gradient-to-r from-red-600 to-ifood-red rounded-3xl p-5 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                <div class="relative z-10 space-y-2 sm:space-y-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="bg-yellow-400 text-gray-900 font-extrabold text-xs px-2.5 py-0.5 rounded-md">⭐ 4.9</span>
+                        <span class="text-[11px] sm:text-xs bg-white/20 backdrop-blur-md px-3 py-0.5 rounded-full font-medium">Mini Mercado Exclusivo</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-4xl font-black">Conveniente & Gelado no seu Flat</h1>
+                    <p class="text-xs sm:text-sm text-red-100 max-w-xl">
+                        Pegue o item diretamente na sua acomodação, adicione ao carrinho e efetue o pagamento via PIX.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Categorias -->
+            <div class="flex space-x-2 sm:space-x-3 overflow-x-auto hide-scrollbar py-1.5 touch-pan-x">
+                <button onclick="filterCategory('Todas', this)" class="cat-btn active bg-ifood-red text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:opacity-90 transition min-h-[40px]">
+                    🔥 Todas
+                </button>
+                <button onclick="filterCategory('Bebidas', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
+                    🥤 Bebidas Geladas
+                </button>
+                <button onclick="filterCategory('Vinhos', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
+                    🍷 Vinhos & Espumantes
+                </button>
+                <button onclick="filterCategory('Snacks', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
+                    🍫 Chocolates & Snacks
+                </button>
+                <button onclick="filterCategory('Higiene', this)" class="cat-btn bg-white text-gray-700 border border-gray-200 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap shadow-sm hover:bg-gray-50 transition min-h-[40px]">
+                    🪥 Higiene Pessoal
+                </button>
+            </div>
+
+            <!-- Busca Rápida -->
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="searchInput" onkeyup="searchProducts()" placeholder="Buscar refrigerante, chocolate, vinho..." class="w-full pl-11 pr-4 py-3 bg-white rounded-2xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-ifood-red text-xs sm:text-sm shadow-sm">
+            </div>
+
+            <!-- Grid de Produtos -->
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                <!-- Inserido dinamicamente via JS -->
+            </div>
+        </section>
+
+        <!-- 3. ÁREA ADMINISTRATIVA (#admin) -->
+        <section id="viewAdmin" class="view-section hidden max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+            
+            <!-- Tela de Login -->
+            <div id="adminAuthBox" class="max-w-md mx-auto bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-gray-100 space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 bg-red-100 text-ifood-red rounded-full flex items-center justify-center mx-auto text-xl sm:text-2xl">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-black">Portal do Proprietário</h2>
+                    <p class="text-xs text-gray-500">Digite a senha master para gerenciar produtos, estoques e preços.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Senha de Acesso</label>
+                        <input type="password" id="adminPasswordInput" placeholder="Sua senha secreta" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-ifood-red outline-none text-sm">
+                    </div>
+                    <button onclick="verificarSenhaHex()" class="w-full bg-ifood-red hover:bg-ifood-darkRed text-white font-bold py-3.5 rounded-xl transition text-sm shadow-md">
+                        Entrar no Portal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Painel Administrativo Autenticado -->
+            <div id="adminDashboard" class="hidden space-y-6">
+                
+                <!-- Cabeçalho Admin -->
+                <div class="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black">Gerenciador do Mercado</h2>
+                        <p class="text-xs text-gray-500">Altere preços, estoque e acompanhe logs do sistema.</p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="openProductEditModal()" class="flex-1 sm:flex-none bg-ifood-red hover:bg-ifood-darkRed text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition shadow-sm min-h-[40px]">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Novo Produto</span>
+                        </button>
+                        <button onclick="syncAllProductsToFirebase()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition shadow-sm min-h-[40px]">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Sincronizar Nuvem</span>
+                        </button>
+                        <button onclick="openQrModal()" class="bg-gray-800 hover:bg-black text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition shadow-sm min-h-[40px]">
+                            <i class="fa-solid fa-qrcode"></i>
+                            <span>Placa QR</span>
+                        </button>
+                        <button onclick="logoutAdmin()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3.5 py-2.5 rounded-xl text-xs transition min-h-[40px]">
+                            Sair
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Abas Admin -->
+                <div class="bg-white rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 space-y-6">
+                    <div class="flex space-x-3 sm:space-x-4 border-b border-gray-200 pb-3 overflow-x-auto hide-scrollbar">
+                        <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="font-bold text-xs sm:text-sm text-ifood-red border-b-2 border-ifood-red pb-2 whitespace-nowrap">
+                            📦 Lista de Produtos
+                        </button>
+                        <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap">
+                            ⚙️ Configurações & Nuvem
+                        </button>
+                        <button onclick="switchAdminTab('console')" id="tabBtnConsole" class="font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap flex items-center space-x-1.5">
+                            <i class="fa-solid fa-terminal text-emerald-600"></i>
+                            <span>📟 Console & Logs</span>
+                        </button>
+                    </div>
+
+                    <!-- Conteúdo Aba Produtos -->
+                    <div id="tabContentProducts" class="space-y-4">
+                        <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                            <table class="w-full text-left text-xs sm:text-sm min-w-[500px]">
+                                <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[10px] sm:text-xs">
+                                    <tr>
+                                        <th class="p-3 rounded-l-xl">Produto</th>
+                                        <th class="p-3">Categoria</th>
+                                        <th class="p-3">Preço (R$)</th>
+                                        <th class="p-3">Estoque</th>
+                                        <th class="p-3">Tag/Selo</th>
+                                        <th class="p-3 text-right rounded-r-xl">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminProductTable" class="divide-y divide-gray-100">
+                                    <!-- Preenchido via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Conteúdo Aba Configurações -->
+                    <div id="tabContentSettings" class="hidden space-y-6 max-w-xl">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">WhatsApp para Receber Pedidos</label>
+                                <input type="text" id="adminPhoneInput" placeholder="Ex: 5531999999999" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Chave PIX Oficial (CPF/CNPJ/Telefone/Email)</label>
+                                <input type="text" id="adminPixInput" value="03137189110" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Firebase API Key (obrigatório para Nuvem)</label>
+                                <input type="text" id="adminApiKeyInput" placeholder="Ex: AIzaSyB..." class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm font-mono">
+                            </div>
+
+                            <div class="pt-2">
+                                <button onclick="saveStoreSettings()" class="w-full sm:w-auto bg-ifood-red text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-ifood-darkRed transition shadow-sm">
+                                    Salvar Configurações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CONTEÚDO ABA CONSOLE & LOGS -->
+                    <div id="tabContentConsole" class="hidden space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <h3 class="font-bold text-sm text-gray-800 flex items-center space-x-2">
+                                    <span>Console do Sistema em Tempo Real</span>
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                </h3>
+                                <p class="text-xs text-gray-500">Acompanhe conexões do Firebase, gravações de produtos e eventos de diagnóstico.</p>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <button onclick="testFirebaseConnection()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center space-x-1 transition">
+                                    <i class="fa-solid fa-play"></i>
+                                    <span>Testar Conexão</span>
+                                </button>
+                                <button onclick="clearSystemConsole()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-3 py-1.5 rounded-xl text-xs transition">
+                                    Limpar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TERMINAL BOX -->
+                        <div class="terminal-box p-4 rounded-2xl shadow-inner text-xs min-h-[280px] max-h-[400px] overflow-y-auto space-y-1.5 font-mono leading-relaxed" id="terminalOutput">
+                            <!-- Logs via JS -->
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DE CARRINHO E CHECKOUT -->
+    <div id="cartModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex justify-end">
+        <div class="bg-white w-full max-w-md h-full flex flex-col justify-between p-4 sm:p-6 shadow-2xl overflow-y-auto">
+            
+            <div class="space-y-4 sm:space-y-6">
+                <!-- Topo do Carrinho -->
+                <div class="flex items-center justify-between border-b border-gray-100 pb-3 sm:pb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-basket-shopping text-ifood-red text-lg sm:text-xl"></i>
+                        <h3 class="font-black text-lg sm:text-xl">Seu Consumo</h3>
+                    </div>
+                    <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center min-h-[32px]">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Lista de Itens do Carrinho -->
+                <div id="cartItemsList" class="space-y-2.5 sm:space-y-3">
+                    <!-- Itens via JS -->
+                </div>
+            </div>
+
+            <!-- Rodapé e Checkout -->
+            <div class="border-t border-gray-100 pt-4 space-y-4 mt-6">
+                <div class="space-y-1.5">
+                    <div class="flex justify-between text-xs sm:text-sm text-gray-500">
+                        <span>Subtotal</span>
+                        <span id="cartSubtotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-base sm:text-lg font-black text-ifood-darkText">
+                        <span>Total a Pagar</span>
+                        <span id="cartTotal" class="text-ifood-red">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <!-- Informações do Hóspede -->
+                <div class="space-y-3 bg-gray-50 p-3.5 sm:p-4 rounded-2xl border border-gray-200">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Seu Nome e Flat/Quarto*</label>
+                        <input type="text" id="guestInfoInput" placeholder="Ex: Flat 102 - Gabriel" class="w-full px-3 py-2 bg-white rounded-xl border border-gray-300 text-xs sm:text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                    </div>
+
+                    <!-- PASSO 1: QR CODE PIX -->
+                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-emerald-200 space-y-2 sm:space-y-3 text-center shadow-sm">
+                        <div class="flex items-center justify-center space-x-1.5 text-[11px] sm:text-xs font-extrabold text-emerald-800 uppercase tracking-wider">
+                            <i class="fa-solid fa-qrcode text-xs sm:text-sm"></i>
+                            <span>Passo 1: Pague via QR Code PIX</span>
+                        </div>
+                        
+                        <div id="cartPixQrCode" class="flex justify-center py-1 max-w-[140px] mx-auto"></div>
+
+                        <div class="flex items-center justify-between bg-emerald-50 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl text-xs font-mono border border-emerald-100">
+                            <span id="pixKeyDisplay" class="font-bold text-emerald-900 truncate mr-1">03137189110</span>
+                            <button onclick="copyPixKey()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2.5 py-1 rounded-lg transition text-[10px] sm:text-[11px] flex items-center space-x-1 shrink-0">
+                                <i class="fa-solid fa-copy"></i>
+                                <span>Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PASSO 2: AVISO E ENVIO NO WHATSAPP COM ANEXO -->
+                    <div class="bg-amber-50 border border-amber-200 p-2.5 sm:p-3 rounded-xl text-[10px] sm:text-[11px] text-amber-900 space-y-1">
+                        <span class="font-black flex items-center space-x-1">
+                            <i class="fa-solid fa-paperclip text-amber-700"></i>
+                            <span>Passo 2: Anexe o Comprovante</span>
+                        </span>
+                        <p class="leading-relaxed">Após fazer o PIX, clique no botão abaixo para enviar o consumo e **anexe a foto do comprovante** na conversa do WhatsApp.</p>
+                    </div>
+                </div>
+
+                <button onclick="submitOrderToWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 sm:py-4 rounded-2xl transition shadow-lg flex items-center justify-center space-x-2 text-xs sm:text-sm min-h-[48px]">
+                    <i class="fa-brands fa-whatsapp text-base sm:text-lg"></i>
+                    <span>Confirmar & Enviar no WhatsApp</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- WIDGET FLUTUANTE SAC WHATSAPP (CANTO ESQUERDO) -->
+    <div class="fixed bottom-5 left-5 z-40 no-print flex flex-col items-start space-y-2">
+        <!-- Popover Card SAC -->
+        <div id="sacPopover" class="hidden bg-white rounded-3xl shadow-2xl p-4 border border-gray-100 max-w-xs space-y-3 text-xs">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                <div class="flex items-center space-x-2.5">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80" alt="Atendente Júlia" class="w-10 h-10 rounded-full object-cover border-2 border-emerald-500">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-900 text-sm">Júlia - SAC FlatFood</h4>
+                        <span class="text-[10px] text-emerald-600 font-extrabold flex items-center space-x-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Online agora no Flat</span>
+                        </span>
+                    </div>
+                </div>
+                <button onclick="toggleSacPopover()" class="w-6 h-6 rounded-full bg-gray-100 text-gray-400 hover:text-gray-700 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 leading-relaxed">Olá! Tem alguma dúvida sobre os produtos, entrega no quarto ou pagamento? Fale comigo agora pelo WhatsApp!</p>
+            <a href="https://wa.me/556392568355?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20o%20FlatFood!" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-2 transition shadow-md">
+                <i class="fa-brands fa-whatsapp text-base"></i>
+                <span>Abrir Chat no WhatsApp</span>
+            </a>
+        </div>
+
+        <!-- Botão Flutuante SAC -->
+        <button onclick="toggleSacPopover()" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 sm:px-3.5 sm:py-2.5 rounded-full shadow-2xl flex items-center space-x-2.5 transition transform hover:scale-105 group border-2 border-white min-h-[48px]">
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=120&auto=format&fit=crop&q=80" alt="Atendente Júlia" class="w-9 h-9 rounded-full object-cover border-2 border-white">
+                <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white animate-pulse"></span>
+            </div>
+            <div class="hidden sm:flex flex-col items-start text-left pr-1">
+                <span class="text-[9px] font-extrabold uppercase tracking-wider text-emerald-200">Suporte 24h</span>
+                <span class="text-xs font-bold leading-tight">Falar com SAC</span>
+            </div>
+            <i class="fa-brands fa-whatsapp text-xl text-white"></i>
+        </button>
+    </div>
+
+    <!-- MODAL DE CADASTRO / EDIÇÃO DE PRODUTO -->
+    <div id="productEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-6 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+                <h3 id="productModalTitle" class="font-black text-xl">Cadastrar / Editar Produto</h3>
+                <button onclick="closeProductEditModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="event.preventDefault(); saveProductFromModal();" class="space-y-4">
+                <input type="hidden" id="editProdId">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nome do Produto*</label>
+                    <input type="text" id="editProdName" required placeholder="Ex: Coca-Cola Zero Lata" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Preço (R$)*</label>
+                        <input type="number" step="0.10" id="editProdPrice" required placeholder="7.00" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Estoque*</label>
+                        <input type="number" id="editProdStock" required placeholder="10" min="0" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoria*</label>
+                        <select id="editProdCategory" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                            <option value="Bebidas">🥤 Bebidas</option>
+                            <option value="Vinhos">🍷 Vinhos & Espumantes</option>
+                            <option value="Snacks">🍫 Chocolates & Snacks</option>
+                            <option value="Higiene">🪥 Higiene Pessoal</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">URL da Imagem</label>
+                    <input type="url" id="editProdImage" placeholder="https://images.unsplash.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Curta</label>
+                    <input type="text" id="editProdDesc" placeholder="Ex: Lata 350ml gelada" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Selo / Tag Destaque</label>
+                    <input type="text" id="editProdTag" placeholder="Ex: Gelada, Casal, Mais Vendido" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-ifood-red outline-none">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                    <button type="button" onclick="closeProductEditModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-xs">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 bg-ifood-red hover:bg-ifood-darkRed text-white font-bold rounded-xl text-xs shadow-md">
+                        Salvar Produto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL PLACA QR CODE DE MESA/QUARTO -->
+    <div id="qrModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-6 shadow-2xl">
+            <div id="plaquePrintArea" class="space-y-4 p-4 border-2 border-dashed border-gray-200 rounded-2xl">
+                <div class="bg-ifood-red text-white font-black text-2xl py-2 px-4 rounded-xl inline-block">
+                    FlatFood 24h
+                </div>
+                <h4 class="font-extrabold text-lg">Mini Mercado no Flat</h4>
+                <p class="text-xs text-gray-500">Leia o QR Code abaixo para acessar o cardápio e efetuar o pagamento do seu consumo.</p>
+                
+                <div id="qrcodeCanvas" class="flex justify-center py-2"></div>
+
+                <div class="text-xs font-mono font-bold bg-gray-100 p-2 rounded-lg text-gray-700">
+                    PIX: 03137189110
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-3">
+                <button onclick="window.print()" class="bg-gray-800 text-white font-bold px-4 py-2 rounded-xl text-xs">
+                    <i class="fa-solid fa-print mr-1"></i> Imprimir Placa
+                </button>
+                <button onclick="closeQrModal()" class="bg-gray-100 text-gray-700 font-bold px-4 py-2 rounded-xl text-xs">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICAÇÃO -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold hidden z-50 transition transform"></div>
+
+    <!-- FIREBASE MODULES & APP SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // MÓDULO DE LOGS & TERMINAL VISUAL
+        const consoleLogs = [];
+        function logToConsole(msg, type = 'info') {
+            const timeStr = new Date().toLocaleTimeString();
+            const logItem = { time: timeStr, msg, type };
+            consoleLogs.push(logItem);
+
+            const output = document.getElementById('terminalOutput');
+            if (output) {
+                const line = document.createElement('div');
+                let cssClass = 'terminal-line-info';
+                if (type === 'warn') cssClass = 'terminal-line-warn';
+                if (type === 'error') cssClass = 'terminal-line-error';
+                if (type === 'success') cssClass = 'terminal-line-success';
+
+                line.className = cssClass;
+                line.innerHTML = `[${timeStr}] [${type.toUpperCase()}] ${msg}`;
+                output.appendChild(line);
+                output.scrollTop = output.scrollHeight;
+            }
+        }
+
+        function clearSystemConsole() {
+            consoleLogs.length = 0;
+            const output = document.getElementById('terminalOutput');
+            if (output) output.innerHTML = '<div class="terminal-line-info">[SYSTEM] Terminal limpo com sucesso.</div>';
+        }
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'flatfood-app';
+        let firebaseConfig = {
+            apiKey: "AIzaSyDvEQfDJmGid_iCgiQM9XThYVe5LigVG5A",
+            authDomain: "flatfood-d4296.firebaseapp.com",
+            projectId: "flatfood-d4296",
+            storageBucket: "flatfood-d4296.firebasestorage.app",
+            messagingSenderId: "695926629715",
+            appId: "1:695926629715:web:42b50ff920566121b8eda6",
+            measurementId: "G-P4GX2HG9YC"
+        };
+
+        if (typeof __firebase_config !== 'undefined') {
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch(e){}
+        }
+
+        let app, db, auth;
+        let isCloudActive = false;
+
+        logToConsole("Iniciando FlatFood 24h App...", "info");
+
+        // PRODUTOS PADRÃO
+        const DEFAULT_PRODUCTS = [
+            { id: 'p1', name: 'Coca-Cola Zero 350ml', price: 7.00, stock: 12, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p2', name: 'Coca-Cola Original 350ml', price: 7.00, stock: 15, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'MAIS VENDIDA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p3', name: 'Sprite Zero 350ml', price: 7.00, stock: 8, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'REFRESCANTE', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p4', name: 'Sprite Normal 350ml', price: 7.00, stock: 10, category: 'Bebidas', desc: 'Lata gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p5', name: 'Água Mineral com Gás 500ml', price: 5.00, stock: 20, category: 'Bebidas', desc: 'Garrafa 500ml bem gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p6', name: 'Água Saborizada', price: 8.00, stock: 6, category: 'Bebidas', desc: 'Garrafa 500ml refrescante', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p7', name: 'Espumante Brut / Moscatel', price: 70.00, stock: 4, category: 'Vinhos', desc: 'Garrafa ideal para celebração', tag: 'ESPECIAL CASAL', image: 'https://images.unsplash.com/photo-1569919659476-f0852f6834b7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p8', name: 'Barra Chocolate', price: 15.00, stock: 10, category: 'Snacks', desc: 'Barra ou bombom selecionado', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p9', name: 'Bisc. Bauducco Especulos', price: 7.00, stock: 8, category: 'Snacks', desc: 'Pacote crocante saboroso', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p10', name: 'Bisc. Marilan chocolate', price: 4.00, stock: 12, category: 'Snacks', desc: 'Biscoito recheado de chocolate', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p11', name: 'Água saborizada 350ml', price: 12.00, stock: 5, category: 'Bebidas', desc: 'Lata / Garrafa saborizada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p12', name: 'Ice Xonei 350ml', price: 8.00, stock: 8, category: 'Bebidas', desc: 'Bebida mista gelada 350ml', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p13', name: 'Paçoca', price: 3.00, stock: 25, category: 'Snacks', desc: 'Docinho tradicional de amendoim', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1582293041079-7814c2f12063?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p14', name: 'Chicl. Mentos', price: 19.00, stock: 7, category: 'Snacks', desc: 'Garrafinha de chiclete Mentos', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p15', name: 'Água de coco', price: 17.00, stock: 6, category: 'Bebidas', desc: 'Água de coco natural e gelada', tag: 'SAUDÁVEL', image: 'https://images.unsplash.com/photo-1525385133512-2f3bdd039054?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p16', name: 'Salg. Levinhos', price: 4.00, stock: 10, category: 'Snacks', desc: 'Salgadinho leve crocante', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p17', name: 'Chocolate (Suflair, prestígio, galak, Negresco)', price: 15.00, stock: 10, category: 'Snacks', desc: 'Barra de chocolate especial', tag: 'CHOCOLATE', image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p18', name: 'Bisc. Bauducco', price: 15.00, stock: 6, category: 'Snacks', desc: 'Pacote de biscoito Bauducco', tag: 'SNACK', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p19', name: 'Salg. Elma chips', price: 8.00, stock: 12, category: 'Snacks', desc: 'Pacote salgadinho Elma Chips', tag: 'CROCANTE', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p20', name: 'Salg. Whav batata', price: 6.00, stock: 9, category: 'Snacks', desc: 'Batata frita crocante em pacote', tag: 'CROCANTE', image: 'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p21', name: 'Bolinho Bauducco', price: 4.00, stock: 14, category: 'Snacks', desc: 'Bolinho macio recheado', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1587314168485-3236d6710814?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p22', name: 'Chocolate garoto talento', price: 8.00, stock: 11, category: 'Snacks', desc: 'Tablete Talento saboroso', tag: 'CHOCOLATE', image: 'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p23', name: 'Bombom garoto', price: 20.00, stock: 5, category: 'Snacks', desc: 'Caixa ou seleção de bombons Garoto', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1548848221-0c2e497ed557?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p24', name: 'Tâmara com caroço', price: 12.00, stock: 8, category: 'Snacks', desc: 'Tâmaras selecionadas e doces', tag: 'SAUDÁVEL', image: 'https://images.unsplash.com/photo-1596591606975-97ee5cef3a1e?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p25', name: 'Amendoim', price: 2.00, stock: 30, category: 'Snacks', desc: 'Pacotinho de amendoim torrado', tag: 'PETISCO', image: 'https://images.unsplash.com/photo-1567892999338-96919288305b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p26', name: 'Barra Snickers', price: 7.00, stock: 15, category: 'Snacks', desc: 'Barra de chocolate Snickers', tag: 'DOCE', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p27', name: 'Refri fys', price: 6.00, stock: 10, category: 'Bebidas', desc: 'Refrigerante Fys lata gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p28', name: 'Coca lata', price: 7.00, stock: 12, category: 'Bebidas', desc: 'Coca-Cola lata 350ml gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p29', name: 'Castanha Pará', price: 39.90, stock: 5, category: 'Snacks', desc: 'Pacote de castanha do Pará', tag: 'NOBRE', image: 'https://images.unsplash.com/photo-1543208541-0059d0620387?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p30', name: 'Castanha caju', price: 37.99, stock: 5, category: 'Snacks', desc: 'Pacote de castanha de caju torrada', tag: 'NOBRE', image: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p31', name: 'Refri sukita', price: 7.00, stock: 8, category: 'Bebidas', desc: 'Refrigerante Sukita lata gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p32', name: 'Pepsi zero', price: 7.00, stock: 8, category: 'Bebidas', desc: 'Refrigerante Pepsi Zero lata', tag: 'ZERO', image: 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p33', name: 'Fys Água Tônica', price: 7.00, stock: 6, category: 'Bebidas', desc: 'Água tônica Fys gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p34', name: 'Red Bull lata', price: 18.00, stock: 10, category: 'Bebidas', desc: 'Energético Red Bull lata 250ml', tag: 'ENERGIA', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p35', name: 'Sprite s/açúcar', price: 8.00, stock: 7, category: 'Bebidas', desc: 'Sprite sem açúcar lata gelada', tag: 'ZERO', image: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p36', name: 'Cerveja Amstel', price: 8.00, stock: 18, category: 'Bebidas', desc: 'Cerveja Amstel lata estupidamente gelada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p37', name: 'Ruffles batata Pringles', price: 15.00, stock: 9, category: 'Snacks', desc: 'Batata crocante selecionada', tag: 'CROCANTE', image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p38', name: 'Yakisoba Nissin', price: 12.00, stock: 8, category: 'Snacks', desc: 'Macarrão instantâneo Yakisoba', tag: 'RÁPIDO', image: 'https://images.unsplash.com/photo-1612927601601-6638404737ce?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p39', name: 'Yakisoba Nissin tomate', price: 14.00, stock: 6, category: 'Snacks', desc: 'Macarrão instantâneo sabor Tomate', tag: 'RÁPIDO', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p40', name: 'Vinho camp Largo 750 ml', price: 55.00, stock: 5, category: 'Vinhos', desc: 'Vinho Campo Largo garrafa 750ml', tag: 'VINHO', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p41', name: 'Vinho M. James', price: 90.00, stock: 3, category: 'Vinhos', desc: 'Vinho fino Marcus James 750ml', tag: 'FINO', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p42', name: 'Necta nutri 290 kt Pessego', price: 10.00, stock: 7, category: 'Bebidas', desc: 'Suco Néctar de Pêssego', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p43', name: 'Água com/Gás', price: 5.00, stock: 15, category: 'Bebidas', desc: 'Água mineral levemente gaseificada', tag: 'GELADA', image: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p44', name: 'Campo Largo red 500', price: 42.00, stock: 4, category: 'Vinhos', desc: 'Vinho Tinto Campo Largo 500ml', tag: 'TINTO', image: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p45', name: 'V D Bosco', price: 65.99, stock: 4, category: 'Vinhos', desc: 'Vinho Dom Bosco garrafa especial', tag: 'TRADICIONAL', image: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p46', name: 'Tic tac', price: 6.00, stock: 20, category: 'Snacks', desc: 'Caixinha de pastilhas Tic Tac', tag: 'REFRESCANTE', image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p47', name: 'Kit Escova + Creme Dental', price: 12.00, stock: 10, category: 'Higiene', desc: 'Escova macia e pasta de dente', tag: 'ESSENCIAL', image: 'https://images.unsplash.com/photo-1559591937-e58af1809278?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p48', name: 'Sabonete Em Barra Dove/Lux', price: 6.00, stock: 15, category: 'Higiene', desc: 'Sabonete cremoso hidratante 90g', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1607006344380-b6775a0824a7?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p49', name: 'Shampoo Pantene / Seda 200ml', price: 18.00, stock: 8, category: 'Higiene', desc: 'Frasco 200ml limpeza suave', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p50', name: 'Escova de Dentes Macia', price: 10.00, stock: 12, category: 'Higiene', desc: 'Cerdas macias com protetor de cerdas', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1522849676594-ba09117cf494?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p51', name: 'Creme Dental Colgate 90g', price: 8.00, stock: 15, category: 'Higiene', desc: 'Pasta de dente proteção total 90g', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300&auto=format&fit=crop&q=80' },
+            { id: 'p52', name: 'Desodorante Aerosol 150ml', price: 19.00, stock: 8, category: 'Higiene', desc: 'Proteção 48h antitranspirante', tag: 'HIGIENE', image: 'https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=300&auto=format&fit=crop&q=80' }
+        ];
+
+        let products = [];
+        let cart = [];
+        let currentCategory = 'Todas';
+        let storeSettings = {
+            whatsapp: '556392568355',
+            pix: '03137189110'
+        };
+
+        async function initFirebase() {
+            try {
+                if (!firebaseConfig.apiKey) {
+                    logToConsole("Firebase API Key ausente. Modo Local ativo.", "warn");
+                    updateCloudStatusUI(false, "Modo Local");
+                    return;
+                }
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                isCloudActive = true;
+                logToConsole("Firebase autenticado e conectado com sucesso!", "success");
+                updateCloudStatusUI(true, "Nuvem Conectada");
+
+                const prodRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+                onSnapshot(prodRef, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const cloudItems = [];
+                        snapshot.forEach(doc => {
+                            if (doc.id !== 'ping_test') {
+                                cloudItems.push({ id: doc.id, ...doc.data() });
+                            }
+                        });
+                        if (cloudItems.length > 0) {
+                            products = cloudItems;
+                            renderProducts();
+                            renderAdminProductList();
+                            logToConsole(`Nuvem Sincronizada: ${cloudItems.length} produtos carregados.`, "success");
+                            updateCloudStatusUI(true, "Nuvem Sincronizada");
+                        }
+                    }
+                }, (err) => {
+                    logToConsole(`Erro no listener da nuvem: ${err.message}`, "error");
+                    updateCloudStatusUI(false, "Sincronização Falhou");
+                });
+            } catch (e) {
+                logToConsole(`Falha ao conectar no Firebase: ${e.message}`, "warn");
+                updateCloudStatusUI(false, "Modo Local");
+                window.firebaseInitError = e.message;
+            }
+        }
+
+        function updateCloudStatusUI(active, text) {
+            const badge = document.getElementById('cloudStatusBadge');
+            const dot = document.getElementById('cloudStatusDot');
+            const txt = document.getElementById('cloudStatusText');
+
+            if (txt) txt.innerText = text;
+            if (active) {
+                if (badge) badge.className = "flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200";
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+            } else {
+                if (badge) badge.className = "flex items-center space-x-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200";
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-500";
+            }
+        }
+
+        function loadLocalStorageData() {
+            try {
+                const localProd = localStorage.getItem('flatfood_products');
+                if (localProd) {
+                    const parsed = JSON.parse(localProd);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        products = parsed;
+                        logToConsole(`Carregados ${products.length} produtos do LocalStorage.`, "info");
+                    } else {
+                        products = [...DEFAULT_PRODUCTS];
+                    }
+                } else {
+                    products = [...DEFAULT_PRODUCTS];
+                    logToConsole(`Carregados ${products.length} produtos padrão.`, "info");
+                }
+            } catch(e) {
+                products = [...DEFAULT_PRODUCTS];
+            }
+            renderProducts();
+        }
+
+        function saveDataLocal() {
+            localStorage.setItem('flatfood_products', JSON.stringify(products));
+        }
+
+        function handleRouting() {
+            const hash = window.location.hash.replace('#', '') || 'landing';
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+
+            if (hash === 'admin') {
+                const viewAdmin = document.getElementById('viewAdmin');
+                if (viewAdmin) viewAdmin.classList.remove('hidden');
+                logToConsole("Navegou para a Área Administrativa.", "info");
+            } else if (hash === 'shop') {
+                const viewShop = document.getElementById('viewShop');
+                if (viewShop) viewShop.classList.remove('hidden');
+                renderProducts();
+                logToConsole("Navegou para o Cardápio de Produtos.", "info");
+            } else {
+                const viewLanding = document.getElementById('viewLanding');
+                if (viewLanding) viewLanding.classList.remove('hidden');
+            }
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (!products || products.length === 0) {
+                products = [...DEFAULT_PRODUCTS];
+            }
+
+            const filtered = products.filter(p => {
+                const matchCat = currentCategory === 'Todas' || p.category === currentCategory;
+                const searchVal = (document.getElementById('searchInput')?.value || '').toLowerCase();
+                const matchSearch = p.name.toLowerCase().includes(searchVal) || (p.desc && p.desc.toLowerCase().includes(searchVal));
+                return matchCat && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 space-y-3">
+                        <i class="fa-solid fa-box-open text-4xl text-gray-300"></i>
+                        <p class="text-sm font-bold text-gray-500">Nenhum produto encontrado nesta categoria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(p => {
+                const isOutOfStock = (p.stock !== undefined && p.stock <= 0);
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-3xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition space-y-3 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="relative h-40 rounded-2xl overflow-hidden bg-gray-100">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x200/eee/333?text=FlatFood'">
+                            ${p.tag ? `<span class="absolute top-2 left-2 bg-ifood-red text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow">${p.tag}</span>` : ''}
+                            ${isOutOfStock ? `<span class="absolute top-2 right-2 bg-gray-800 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-md shadow">Esgotado</span>` : ''}
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-base leading-snug">${p.name}</h3>
+                            <p class="text-xs text-gray-400 mt-1">${p.desc || ''}</p>
+                            <p class="text-[11px] font-medium text-gray-500 mt-1">${isOutOfStock ? '<span class="text-red-600 font-bold">Sem Estoque</span>' : `Estoque: ${p.stock ?? 10} un.`}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-50">
+                        <span class="text-lg font-black text-ifood-darkText">R$ ${Number(p.price).toFixed(2).replace('.', ',')}</span>
+                        <button onclick="addToCart('${p.id}')" ${isOutOfStock ? 'disabled' : ''} class="${isOutOfStock ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-ifood-red hover:bg-ifood-darkRed text-white shadow-sm'} font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition">
+                            <i class="fa-solid fa-${isOutOfStock ? 'ban' : 'plus'}"></i>
+                            <span>${isOutOfStock ? 'Esgotado' : 'Adicionar'}</span>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat, btnEl) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('bg-ifood-red', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            if (btnEl) {
+                btnEl.classList.remove('bg-white', 'text-gray-700');
+                btnEl.classList.add('bg-ifood-red', 'text-white');
+            }
+            renderProducts();
+        }
+
+        function searchProducts() {
+            renderProducts();
+        }
+
+        function addToCart(prodId) {
+            const prod = products.find(p => p.id === prodId);
+            if (!prod) return;
+            if (prod.stock !== undefined && prod.stock <= 0) {
+                showToast('Produto esgotado no momento!', 'error');
+                return;
+            }
+
+            const existing = cart.find(item => item.id === prodId);
+            if (existing) {
+                if (prod.stock !== undefined && existing.qty >= prod.stock) {
+                    showToast('Quantidade máxima em estoque atingida!', 'error');
+                    return;
+                }
+                existing.qty++;
+            } else {
+                cart.push({ ...prod, qty: 1 });
+            }
+            updateCartUI();
+            logToConsole(`Adicionou ao carrinho: ${prod.name}`, "info");
+            showToast(`"${prod.name}" adicionado ao carrinho!`);
+        }
+
+        function generateCartPixQrCode() {
+            const qrContainer = document.getElementById('cartPixQrCode');
+            if (!qrContainer) return;
+            qrContainer.innerHTML = '';
+            
+            const pixKey = storeSettings.pix || '03137189110';
+            new QRCode(qrContainer, {
+                text: pixKey,
+                width: 130,
+                height: 130,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
+        function updateCartUI() {
+            const countEl = document.getElementById('headerCartCount');
+            const totalQty = cart.reduce((acc, item) => acc + item.qty, 0);
+            if (countEl) countEl.innerText = totalQty;
+
+            const itemsList = document.getElementById('cartItemsList');
+            if (!itemsList) return;
+            itemsList.innerHTML = '';
+
+            let total = 0;
+
+            cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+
+                const row = document.createElement('div');
+                row.className = "flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 text-sm";
+                row.innerHTML = `
+                    <div class="space-y-0.5">
+                        <h4 class="font-bold text-gray-800">${item.name}</h4>
+                        <span class="text-xs text-gray-500">R$ ${item.price.toFixed(2)} cada</span>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold flex items-center justify-center hover:bg-gray-100">-</button>
+                        <span class="font-black text-xs px-1">${item.qty}</span>
+                        <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold flex items-center justify-center hover:bg-gray-100">+</button>
+                    </div>
+                `;
+                itemsList.appendChild(row);
+            });
+
+            const subTotalEl = document.getElementById('cartSubtotal');
+            const totalEl = document.getElementById('cartTotal');
+            if (subTotalEl) subTotalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            if (totalEl) totalEl.innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
+
+            generateCartPixQrCode();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            }
+            updateCartUI();
+        }
+
+        function openCartModal() {
+            updateCartUI();
+            const modal = document.getElementById('cartModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeCartModal() {
+            const modal = document.getElementById('cartModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function submitOrderToWhatsApp() {
+            const guestInfo = document.getElementById('guestInfoInput')?.value.trim();
+            if (!guestInfo) {
+                showToast('Informe seu nome e número do flat!', 'error');
+                return;
+            }
+            if (cart.length === 0) {
+                showToast('Seu carrinho está vazio!', 'error');
+                return;
+            }
+
+            let msg = `🛒 *NOVO CONSUMO - FLATFOOD*\n`;
+            msg += `📍 *Hóspede/Flat:* ${guestInfo}\n\n`;
+            msg += `*Itens Consumidos:*\n`;
+
+            let total = 0;
+            cart.forEach(i => {
+                const sub = i.price * i.qty;
+                total += sub;
+                msg += `• ${i.qty}x ${i.name} - R$ ${sub.toFixed(2)}\n`;
+            });
+
+            msg += `\n💰 *Total:* R$ ${total.toFixed(2).replace('.', ',')}\n`;
+            msg += `💳 *Forma de Pagamento:* PIX (Chave: ${storeSettings.pix})\n\n`;
+            msg += `⚠️ *IMPORTANTE:* Favor anexar o comprovante de pagamento do PIX a esta mensagem!`;
+
+            const phone = storeSettings.whatsapp.replace(/\D/g, '') || '5531999999999';
+            const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+
+            logToConsole(`Pedido enviado no WhatsApp para ${guestInfo}. Total: R$ ${total.toFixed(2)}`, "success");
+
+            cart = [];
+            updateCartUI();
+            closeCartModal();
+            showToast('Pedido gerado! Enviando no WhatsApp...');
+        }
+
+        function copyPixKey() {
+            const pix = storeSettings.pix;
+            const el = document.createElement('textarea');
+            el.value = pix;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast('Chave PIX copiada com sucesso!');
+        }
+
+        function verificarSenhaHex() {
+            const codigos = [0x40, 0x46, 0x6C, 0x61, 0x74, 0x46, 0x6F, 0x6F, 0x64, 0x32, 0x30, 0x32, 0x36, 0x40];
+            const senhaSecreta = String.fromCharCode(...codigos);
+            const input = document.getElementById('adminPasswordInput')?.value;
+
+            if (input === senhaSecreta) {
+                document.getElementById('adminAuthBox')?.classList.add('hidden');
+                document.getElementById('adminDashboard')?.classList.remove('hidden');
+                renderAdminProductList();
+                logToConsole("Autenticação Admin realizada com sucesso.", "success");
+                showToast('Acesso concedido!');
+            } else {
+                logToConsole("Tentativa incorreta de senha no Admin.", "warn");
+                showToast('Senha incorreta!', 'error');
+            }
+        }
+
+        function logoutAdmin() {
+            document.getElementById('adminDashboard')?.classList.add('hidden');
+            document.getElementById('adminAuthBox')?.classList.remove('hidden');
+            const passInput = document.getElementById('adminPasswordInput');
+            if (passInput) passInput.value = '';
+            logToConsole("Sessão Admin encerrada.", "info");
+        }
+
+        function switchAdminTab(tab) {
+            document.getElementById('tabContentProducts')?.classList.add('hidden');
+            document.getElementById('tabContentSettings')?.classList.add('hidden');
+            document.getElementById('tabContentConsole')?.classList.add('hidden');
+
+            document.getElementById('tabBtnProducts').className = "font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap";
+            document.getElementById('tabBtnSettings').className = "font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap";
+            document.getElementById('tabBtnConsole').className = "font-bold text-xs sm:text-sm text-gray-500 hover:text-gray-700 pb-2 whitespace-nowrap flex items-center space-x-1.5";
+
+            if (tab === 'products') {
+                document.getElementById('tabContentProducts')?.classList.remove('hidden');
+                document.getElementById('tabBtnProducts').className = "font-bold text-xs sm:text-sm text-ifood-red border-b-2 border-ifood-red pb-2 whitespace-nowrap";
+            } else if (tab === 'settings') {
+                document.getElementById('tabContentSettings')?.classList.remove('hidden');
+                document.getElementById('tabBtnSettings').className = "font-bold text-xs sm:text-sm text-ifood-red border-b-2 border-ifood-red pb-2 whitespace-nowrap";
+            } else if (tab === 'console') {
+                document.getElementById('tabContentConsole')?.classList.remove('hidden');
+                document.getElementById('tabBtnConsole').className = "font-bold text-xs sm:text-sm text-emerald-600 border-b-2 border-emerald-600 pb-2 whitespace-nowrap flex items-center space-x-1.5";
+            }
+        }
+
+        function renderAdminProductList() {
+            const table = document.getElementById('adminProductTable');
+            if (!table) return;
+            table.innerHTML = '';
+
+            products.forEach((p, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-bold flex items-center space-x-2">
+                        <img src="${p.image}" class="w-8 h-8 rounded-lg object-cover">
+                        <span>${p.name}</span>
+                    </td>
+                    <td class="p-3 text-gray-500">${p.category}</td>
+                    <td class="p-3 font-black text-ifood-red">R$ ${Number(p.price).toFixed(2)}</td>
+                    <td class="p-3 font-bold">${p.stock ?? 10} un.</td>
+                    <td class="p-3"><span class="text-xs bg-gray-100 px-2 py-0.5 rounded font-bold">${p.tag || '-'}</span></td>
+                    <td class="p-3 text-right space-x-2">
+                        <button onclick="editProductAdmin(${idx})" class="text-blue-600 hover:text-blue-800 font-bold text-xs" title="Editar Preço e Estoque">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="removeProductAdmin(${idx})" class="text-red-600 hover:text-red-800 font-bold text-xs" title="Excluir">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+        }
+
+        function openProductEditModal() {
+            document.getElementById('editProdId').value = '';
+            document.getElementById('editProdName').value = '';
+            document.getElementById('editProdPrice').value = '';
+            document.getElementById('editProdStock').value = '10';
+            document.getElementById('editProdCategory').value = 'Bebidas';
+            document.getElementById('editProdDesc').value = '';
+            document.getElementById('editProdTag').value = '';
+            document.getElementById('editProdImage').value = '';
+            
+            document.getElementById('productModalTitle').innerText = 'Cadastrar Novo Produto';
+            document.getElementById('productEditModal').classList.remove('hidden');
+        }
+
+        function closeProductEditModal() {
+            document.getElementById('productEditModal').classList.add('hidden');
+        }
+
+        function editProductAdmin(idx) {
+            const p = products[idx];
+            if (!p) return;
+
+            document.getElementById('editProdId').value = idx;
+            document.getElementById('editProdName').value = p.name || '';
+            document.getElementById('editProdPrice').value = p.price || 0;
+            document.getElementById('editProdStock').value = p.stock ?? 10;
+            document.getElementById('editProdCategory').value = p.category || 'Bebidas';
+            document.getElementById('editProdDesc').value = p.desc || '';
+            document.getElementById('editProdTag').value = p.tag || '';
+            document.getElementById('editProdImage').value = p.image || '';
+
+            document.getElementById('productModalTitle').innerText = 'Editar Preço, Estoque e Detalhes';
+            document.getElementById('productEditModal').classList.remove('hidden');
+        }
+
+        async function saveProductFromModal() {
+            const idxVal = document.getElementById('editProdId').value;
+            const name = document.getElementById('editProdName').value.trim();
+            const price = parseFloat(document.getElementById('editProdPrice').value) || 0;
+            const stock = parseInt(document.getElementById('editProdStock').value) || 0;
+            const category = document.getElementById('editProdCategory').value;
+            const desc = document.getElementById('editProdDesc').value.trim();
+            const tag = document.getElementById('editProdTag').value.trim();
+            const image = document.getElementById('editProdImage').value.trim() || 'https://placehold.co/300x200/eee/333?text=FlatFood';
+
+            const prodObj = {
+                id: idxVal !== '' ? products[idxVal].id : 'p_' + Date.now(),
+                name, price, stock, category, desc, tag, image
+            };
+
+            if (idxVal !== '') {
+                products[idxVal] = prodObj;
+            } else {
+                products.push(prodObj);
+            }
+
+            if (isCloudActive && db) {
+                try {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodObj.id), prodObj);
+                    logToConsole(`Produto "${prodObj.name}" salvo no Firebase Firestore.`, "success");
+                    showToast('Salvo na Nuvem com sucesso!');
+                } catch(e) {
+                    saveDataLocal();
+                    logToConsole(`Erro no Firestore ao salvar produto: ${e.message}`, "error");
+                    showToast('Salvo Localmente!', 'warning');
+                }
+            } else {
+                saveDataLocal();
+                logToConsole(`Produto "${prodObj.name}" salvo no LocalStorage.`, "info");
+                showToast('Salvo Localmente!');
+            }
+
+            closeProductEditModal();
+            renderAdminProductList();
+            renderProducts();
+        }
+
+        async function removeProductAdmin(idx) {
+            const removed = products.splice(idx, 1);
+            if (removed[0] && isCloudActive && db) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', removed[0].id));
+                    logToConsole(`Produto "${removed[0].name}" removido da nuvem.`, "info");
+                    showToast(`"${removed[0].name}" removido da nuvem!`);
+                } catch(e) {
+                    saveDataLocal();
+                    showToast('Removido localmente!');
+                }
+            } else {
+                saveDataLocal();
+                showToast('Produto removido!');
+            }
+            renderAdminProductList();
+            renderProducts();
+        }
+
+        async function syncAllProductsToFirebase() {
+            if (!isCloudActive || !db) {
+                showToast('Firebase não está ativo! Configure a API Key na aba Configurações.', 'error');
+                logToConsole("Sincronização em massa abortada: Firebase inativo.", "warn");
+                return;
+            }
+
+            showToast(`Iniciando sincronização dos ${DEFAULT_PRODUCTS.length} produtos...`);
+            logToConsole("Iniciando gravação dos produtos no Firestore...", "info");
+            try {
+                let successCount = 0;
+                for (const prod of DEFAULT_PRODUCTS) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', prod.id), prod);
+                    successCount++;
+                }
+                logToConsole(`Sincronização em massa concluída: ${successCount} produtos salvos.`, "success");
+                showToast(`🚀 Sucesso! ${successCount} produtos cadastrados e sincronizados no Firebase!`);
+                renderProducts();
+                renderAdminProductList();
+            } catch (e) {
+                logToConsole(`Erro na sincronização em massa: ${e.message}`, "error");
+                showToast(`Erro ao sincronizar: ${e.message}`, 'error');
+            }
+        }
+
+        async function testFirebaseConnection() {
+            logToConsole("Executando teste manual de conexão com o Firebase...", "info");
+            if (!isCloudActive || !db) {
+                const cause = window.firebaseInitError || "Sem apiKey do Firebase configurada.";
+                logToConsole(`Teste abortado: Modo Local ativo. Motivo: ${cause}`, "warn");
+                return;
+            }
+
+            try {
+                const testDoc = doc(db, 'artifacts', appId, 'public', 'data', 'products', 'ping_test');
+                await setDoc(testDoc, { ping: true, timestamp: Date.now() });
+                logToConsole("✅ Teste OK! Firestore respondeu e aceitou a gravação.", "success");
+            } catch(e) {
+                logToConsole(`❌ Erro de permissão/conexão no Firestore: ${e.message}`, "error");
+            }
+        }
+
+        function saveStoreSettings() {
+            const phone = document.getElementById('adminPhoneInput')?.value.trim();
+            const pix = document.getElementById('adminPixInput')?.value.trim();
+            const apiKey = document.getElementById('adminApiKeyInput')?.value.trim();
+
+            if (phone) storeSettings.whatsapp = phone;
+            if (pix) {
+                storeSettings.pix = pix;
+                const pixDisplay = document.getElementById('pixKeyDisplay');
+                if (pixDisplay) pixDisplay.innerText = pix;
+            }
+            if (apiKey !== undefined) {
+                localStorage.setItem('flatfood_api_key', apiKey);
+                logToConsole("API Key salva no LocalStorage. Recarregue a página.", "info");
+            }
+            showToast('Configurações salvas! Recarregue a página para aplicar a API Key.');
+        }
+
+        function openQrModal() {
+            const qrCanvas = document.getElementById('qrcodeCanvas');
+            if (qrCanvas) {
+                qrCanvas.innerHTML = '';
+                const shopUrl = window.location.href.split('#')[0] + '#shop';
+                new QRCode(qrCanvas, {
+                    text: shopUrl,
+                    width: 160,
+                    height: 160
+                });
+            }
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function enterShopFromLanding() {
+            const input = document.getElementById('landingFlatInput')?.value.trim();
+            if (input) {
+                const guestInput = document.getElementById('guestInfoInput');
+                if (guestInput) guestInput.value = input;
+            }
+            window.location.hash = 'shop';
+        }
+
+        function toggleSacPopover() {
+            const popover = document.getElementById('sacPopover');
+            if (popover) popover.classList.toggle('hidden');
+        }
+
+        function showToast(msg, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.className = `fixed bottom-6 right-6 px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold z-50 transition transform ${type === 'error' ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // BINDING ALL FUNCTIONS TO WINDOW
+        window.renderProducts = renderProducts;
+        window.filterCategory = filterCategory;
+        window.searchProducts = searchProducts;
+        window.addToCart = addToCart;
+        window.changeQty = changeQty;
+        window.openCartModal = openCartModal;
+        window.closeCartModal = closeCartModal;
+        window.submitOrderToWhatsApp = submitOrderToWhatsApp;
+        window.copyPixKey = copyPixKey;
+        window.verificarSenhaHex = verificarSenhaHex;
+        window.logoutAdmin = logoutAdmin;
+        window.switchAdminTab = switchAdminTab;
+        window.renderAdminProductList = renderAdminProductList;
+        window.openProductEditModal = openProductEditModal;
+        window.closeProductEditModal = closeProductEditModal;
+        window.editProductAdmin = editProductAdmin;
+        window.saveProductFromModal = saveProductFromModal;
+        window.removeProductAdmin = removeProductAdmin;
+        window.syncAllProductsToFirebase = syncAllProductsToFirebase;
+        window.testFirebaseConnection = testFirebaseConnection;
+        window.saveStoreSettings = saveStoreSettings;
+        window.openQrModal = openQrModal;
+        window.closeQrModal = closeQrModal;
+        window.enterShopFromLanding = enterShopFromLanding;
+        window.toggleSacPopover = toggleSacPopover;
+        window.showToast = showToast;
+        window.clearSystemConsole = clearSystemConsole;
+
+        async function initApp() {
+            handleRouting();
+            window.addEventListener('hashchange', handleRouting);
+            loadLocalStorageData();
+            await initFirebase();
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initApp();
+        } else {
+            document.addEventListener('DOMContentLoaded', initApp);
+        }
+    </script>
+</body>
+</html>
